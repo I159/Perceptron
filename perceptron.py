@@ -36,17 +36,27 @@ class Perceptron(object):
 
 
 class Network(object):
-    def __init__(self, quantity=None):
+    def __init__(self, image_size, quantity=None):
         # Use default quantity or calculate a quantity of neurons during
         # learning process
         self.quantity = quantity
+        self.image_size = image_size
 
     def _use_learning_data(self, root_path):
         paths = os.listdir(root_path)
         file_paths = (os.path.join(root_path, i) for i in paths)
         for i in file_paths:
             img = Image.open(i)
-            yield img.getdata()
+            # FIXME: gif images milformed after thumbnailing
+            img.thumbnail(self.image_size, Image.ANTIALIAS)
+            bordered = Image.new('RGBA', self.image_size, (255, 255, 255, 0))
+            bordered.paste(
+                    img,
+                    (
+                        (self.image_size[0] - img.size[0]) / 2,
+                        (self.image_size[1] - img.size[1]) / 2)
+                    )
+            yield bordered.getdata()
 
     def learn(self, root_path):
         for i in self._use_learning_data(root_path):
@@ -61,7 +71,7 @@ class Network(object):
 class TestNetworkDefaultQuantity(unittest.TestCase):
 
     def setUp(self):
-        self.network = Network(32) # Cyrillic alphabet
+        self.network = Network((300, 300), 32) # Cyrillic alphabet
 
     def test_learn(self):
         self.network.learn("/home/i159/Downloads/learning_data")
