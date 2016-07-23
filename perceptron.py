@@ -1,9 +1,10 @@
-class Neuron(object):
+class Perceptron(object):
     def __init__(self, size):
-        # default weights
-        # default threshold
-        # create signal matrix
-        raise NotImplementedError
+        self.size = size
+        self.weights = [[0]*size[0]]*size[1]
+
+    def __repr__(self):
+        return "Perceptron({}x{})".format(*self.size)
 
     def learn(self, input_signal):
         raise NotImplementedError
@@ -26,3 +27,23 @@ class Neuron(object):
         # Compare result with the threshold
         # Return boolean
         raise NotImplementedError
+
+
+class Network(object):
+    def __init__(self, quantity=None):
+        # Use default quantity or calculate a quantity of neurons during
+        # learning process
+        raise NotImplementedError
+
+    def learn(self, input_signal):
+        # If no neurons presented - create and learn it
+        # If every neurons are in initial state - learn first
+        # else choose the most appropriate neuron
+        # if there is no appropriate neuron - create new and learn (or learn
+        # next one from initial state)
+        raise NotImplementedError
+
+
+if __name__== "__main__":
+    perceptron = Perceptron((100, 100))
+    print perceptron
