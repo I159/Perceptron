@@ -41,23 +41,21 @@ class Network(object):
         # learning process
         self.quantity = quantity
 
-    def open_image(self, image):
-        raise NotImplementedError
-
-    def use_learning_data(self, root_path):
+    def _use_learning_data(self, root_path):
         paths = os.listdir(root_path)
         file_paths = (os.path.join(root_path, i) for i in paths)
-        # open images with PIL
-        # Convert to a pixel matrix
-        # Learn with the matrixes
+        for i in file_paths:
+            img = Image.open(i)
+            yield img.getdata()
 
-    def learn(self, input_signal):
-        # If no neurons presented - create and learn it
-        # If every neurons are in initial state - learn first
-        # else choose the most appropriate neuron
-        # if there is no appropriate neuron - create new and learn (or learn
-        # next one from initial state)
-        raise NotImplementedError
+    def learn(self, root_path):
+        for i in self._use_learning_data(root_path):
+            # If no neurons presented - create and learn it
+            # If every neurons are in initial state - learn first
+            # else choose the most appropriate neuron
+            # if there is no appropriate neuron - create new and learn (or learn
+            # next one from initial state)
+            pass
 
 
 class TestNetworkDefaultQuantity(unittest.TestCase):
@@ -65,5 +63,5 @@ class TestNetworkDefaultQuantity(unittest.TestCase):
     def setUp(self):
         self.network = Network(32) # Cyrillic alphabet
 
-    def test_use_learning_data(self):
-        self.network.use_learning_data("/home/i159/Downloads/learning_data")
+    def test_learn(self):
+        self.network.learn("/home/i159/Downloads/learning_data")
