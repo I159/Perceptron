@@ -1,3 +1,9 @@
+import os
+
+from PIL import Image
+import unittest
+
+
 class Perceptron(object):
     def __init__(self, size):
         self.size = size
@@ -33,7 +39,17 @@ class Network(object):
     def __init__(self, quantity=None):
         # Use default quantity or calculate a quantity of neurons during
         # learning process
+        self.quantity = quantity
+
+    def open_image(self, image):
         raise NotImplementedError
+
+    def use_learning_data(self, root_path):
+        paths = os.listdir(root_path)
+        file_paths = (os.path.join(root_path, i) for i in paths)
+        # open images with PIL
+        # Convert to a pixel matrix
+        # Learn with the matrixes
 
     def learn(self, input_signal):
         # If no neurons presented - create and learn it
@@ -44,6 +60,10 @@ class Network(object):
         raise NotImplementedError
 
 
-if __name__== "__main__":
-    perceptron = Perceptron((100, 100))
-    print perceptron
+class TestNetworkDefaultQuantity(unittest.TestCase):
+
+    def setUp(self):
+        self.network = Network(32) # Cyrillic alphabet
+
+    def test_use_learning_data(self):
+        self.network.use_learning_data("/home/i159/Downloads/learning_data")
