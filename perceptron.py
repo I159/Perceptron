@@ -4,16 +4,21 @@ from PIL import Image
 import unittest
 
 
-class Perceptron(object):
+class Neuron(object):
     def __init__(self, size):
         self.size = size
-        self.weights = [[0]*size[0]]*size[1]
+        #self.weights = [[0]*size[0]]*size[1]
+        self.weights = [(0, 0, 0)] * (size[0] * size[1])
+
+    def is_init(self):
+        return len(set(self.weights)) == 1
 
     def __repr__(self):
         return "Perceptron({}x{})".format(*self.size)
 
     def learn(self, input_signal):
-        raise NotImplementedError
+        print len(input_signal) == len(self.weights)
+        # Change weights
 
     def percive(self, input_signal):
         # get input signal in initial format (image)
@@ -39,7 +44,7 @@ class Network(object):
     def __init__(self, image_size, quantity=None):
         # Use default quantity or calculate a quantity of neurons during
         # learning process
-        self.quantity = quantity
+        self.neurons = [Neuron(image_size) for i in xrange(quantity)]
         self.image_size = image_size
 
     def _use_learning_data(self, root_path):
@@ -60,12 +65,15 @@ class Network(object):
 
     def learn(self, root_path):
         for i in self._use_learning_data(root_path):
+            for v in self.neurons:
+                if v.is_init():
+                    v.learn(i)
+                    break
             # If no neurons presented - create and learn it
             # If every neurons are in initial state - learn first
             # else choose the most appropriate neuron
             # if there is no appropriate neuron - create new and learn (or learn
             # next one from initial state)
-            pass
 
 
 class TestNetworkDefaultQuantity(unittest.TestCase):
