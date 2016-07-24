@@ -1,34 +1,40 @@
 import collections
 import os
+import string
 
 from PIL import Image
 import unittest
 
 
 class Neuron(object):
-    def __init__(self, size):
+    def __init__(self, size, letter):
+        self.letter = letter
         self.size = size
         self.weights = [0] * size
         self.threshold = size / float(1000)
 
-    def is_init(self):
-        return len(set(self.weights)) == 1
-
-    def __repr__(self):
-        return "Perceptron({}x{})".format(*self.size)
-
-    def learn(self, input_signal): #, correct_answer):
+    def learn(self, input_signal, letter):
+        print "Learning of letter -={}=- at the neuron -={}=- with.".format(
+                letter, self.letter)
         difference = self.get_bg_rel_diff(input_signal)
         result = self.recognize(difference)
-        #if result == True and resut != correct_answer:
-            #for i, j in zip(self.weights:
 
-        #    do nothing
-        # Else if result is incorrect:
-        #    and true:
-        #        deduct input signal values from the weights.
-        #    else:
-        #        add input signal values to the weights.
+        if result == True and letter != self.letter:
+            for i, j in enumerate(difference):
+                self.weights[i] -= j
+        elif result == False and letter == self.letter:
+            for i, j in enumerate(difference):
+                self.weights[i] += j
+
+    @staticmethod
+    def _percent_diff(x):
+        for i, j in x:
+            i, j = (i, j) if i < j else (j, i)
+            if i == j == 0:
+                return 0
+            elif i == 0:
+                return 1
+            return 1 - (sum(float(i)/float(j) for i, j in x)) / 3.0
 
     def get_bg_rel_diff(self, input_signal):
         counter = collections.Counter(input_signal)
@@ -36,9 +42,7 @@ class Neuron(object):
         background = most_common[0]
 
         zip_with_bg = lambda x: zip(x, background[0])[:3]
-        get_diff = lambda x: 1 - (sum(float(i)/float(j) for i, j in x) / 3.0)
-
-        return map(get_diff, map(zip_with_bg, input_signal))
+        return map(self._percent_diff, map(zip_with_bg, input_signal))
 
     def recognize(self, input_signal):
         multiplied = (i * j for i, j in zip(input_signal, self.weights))
@@ -46,11 +50,11 @@ class Neuron(object):
 
 
 class Network(object):
-    def __init__(self, image_size, quantity=None):
+    def __init__(self, image_size, letters):
         # Use default quantity or calculate a quantity of neurons during
         # learning process
         pix_num = image_size[0] * image_size[1]
-        self.neurons = [Neuron(pix_num) for i in xrange(quantity)]
+        self.neurons = [Neuron(pix_num, i) for i in letters]
         self.image_size = image_size
 
     def _use_learning_data(self, root_path):
@@ -69,25 +73,16 @@ class Network(object):
                     )
             yield bordered.getdata()
 
-    def learn(self, root_path):
+    def learn(self, root_path, letter):
         for i in self._use_learning_data(root_path):
-            # TODO: learn each neuron different letters
-            # Pass correct answer to a neuron
             for v in self.neurons:
-                if v.is_init():
-                    v.learn(i)
-                    break
-            # If no neurons presented - create and learn it
-            # If every neurons are in initial state - learn first
-            # else choose the most appropriate neuron
-            # if there is no appropriate neuron - create new and learn (or learn
-            # next one from initial state)
+                v.learn(i, letter)
 
 
 class TestNetworkDefaultQuantity(unittest.TestCase):
 
     def setUp(self):
-        self.network = Network((300, 300), 32) # Cyrillic alphabet
+        self.network = Network((300, 300), string.ascii_lowercase)
 
     def test_learn(self):
-        self.network.learn("/home/i159/Downloads/learning_data")
+        self.network.learn("/home/i159/Downloads/learning_data", 'a')
