@@ -17,9 +17,12 @@ class Neuron(object):
     def __repr__(self):
         return "Perceptron({}x{})".format(*self.size)
 
-    def learn(self, input_signal, correct_answer):
-        result = self.recognize(input_signal)
-        # If result is correct:
+    def learn(self, input_signal): #, correct_answer):
+        difference = self.get_bg_rel_diff(input_signal)
+        result = self.recognize(difference)
+        #if result == True and resut != correct_answer:
+            #for i, j in zip(self.weights:
+
         #    do nothing
         # Else if result is incorrect:
         #    and true:
@@ -28,22 +31,17 @@ class Neuron(object):
         #        add input signal values to the weights.
 
     def get_bg_rel_diff(self, input_signal):
-        bg_difference = lambda x: 1 - (float(x[0]) / float(x[1]))
         counter = collections.Counter(input_signal)
         most_common = counter.most_common()
         background = most_common[0]
-        for i in most_common[2:]:
-            yield sum(map(bg_difference, zip(i[0], background[0])[:3])) / 3
 
-    def mul_signal_weight(self, input_signal):
-        for i, v in zip(input_signal, self.weights):
-            yield i * v
+        zip_with_bg = lambda x: zip(x, background[0])[:3]
+        get_diff = lambda x: 1 - (sum(float(i)/float(j) for i, j in x) / 3.0)
 
-    def _sum_signal_weight(self, input_signal):
-        raise NotImplementedError
+        return map(get_diff, map(zip_with_bg, input_signal))
 
     def recognize(self, input_signal):
-        multiplied = self.mul_signal_weight(self.get_bg_rel_diff(input_signal))
+        multiplied = (i * j for i, j in zip(input_signal, self.weights))
         return sum(multiplied) >= self.threshold
 
 
