@@ -3,6 +3,7 @@ import cProfile
 import os
 import string
 
+import numpy
 from PIL import Image
 import profilehooks
 import unittest
@@ -45,14 +46,16 @@ class Neuron(object):
         return 1 - sum(self._diff_by_color(x)) / float(self.pixel_length)
 
     def get_bg_rel_diff(self, input_signal):
-        counter = collections.Counter(input_signal)
-        most_common = counter.most_common()
-        background = most_common[0]
+        import pdb; pdb.set_trace()
+        unique_a = numpy.unique(input_signal.view([('', input_signal.dtype)]*input_signal.shape[1]), return_counts=True)
+        #counter = collections.Counter(input_signal)
+        #most_common = counter.most_common()
+        #background = most_common[0]
 
-        result = []
-        for i in input_signal:
-            result.append(self._percent_diff((i, background[0])))
-        return result
+        #result = []
+        #for i in input_signal:
+            #result.append(self._percent_diff((i, background[0])))
+        #return result
 
     def recognize(self, input_signal):
         multiplied = (i * j for i, j in zip(input_signal, self.weights))
@@ -82,7 +85,7 @@ class Network(object):
                             (self.image_size[0] - img.size[0]) / 2,
                             (self.image_size[1] - img.size[1]) / 2)
                         )
-                yield bordered.getdata()
+                yield numpy.array(bordered.getdata(), dtype=float, ndmin=2)
             except IOError:
                 continue
 
