@@ -1,8 +1,10 @@
 import collections
+import cProfile
 import os
 import string
 
 from PIL import Image
+import profilehooks
 import unittest
 
 
@@ -12,6 +14,7 @@ class Neuron(object):
         self.size = size
         self.weights = [0] * size
         self.threshold = size / float(1000)
+        self.pixel_length = 4
 
     def learn(self, input_signal, letter):
         print "Learning of letter -={}=- at the neuron -={}=- with.".format(
@@ -26,28 +29,34 @@ class Neuron(object):
             for i, j in enumerate(difference):
                 self.weights[i] += j
 
-    @staticmethod
-    def _percent_diff(x):
-        for i, j in x:
+    def _diff_by_color(self, x):
+        for idx in xrange(self.pixel_length):
+            i = x[0][idx]
+            j = x[1][idx]
             i, j = (i, j) if i < j else (j, i)
             if i == j == 0:
-                return 0
+                yield 0
             elif i == 0:
-                return 1
-            return 1 - (sum(float(i)/float(j) for i, j in x)) / 3.0
+                yield 1
+            else:
+                yield float(i)/float(j)
+
+    def _percent_diff(self, x):
+        return 1 - sum(self._diff_by_color(x)) / float(self.pixel_length)
 
     def get_bg_rel_diff(self, input_signal):
         counter = collections.Counter(input_signal)
         most_common = counter.most_common()
         background = most_common[0]
 
-        zip_with_bg = lambda x: zip(x, background[0])[:3]
-        return map(self._percent_diff, map(zip_with_bg, input_signal))
+        result = []
+        for i in input_signal:
+            result.append(self._percent_diff((i, background[0])))
+        return result
 
     def recognize(self, input_signal):
         multiplied = (i * j for i, j in zip(input_signal, self.weights))
         return sum(multiplied) >= self.threshold
-
 
 class Network(object):
     def __init__(self, image_size, letters):
@@ -61,17 +70,21 @@ class Network(object):
         paths = os.listdir(root_path)
         file_paths = (os.path.join(root_path, i) for i in paths)
         for i in file_paths:
-            img = Image.open(i)
-            # FIXME: gif images milformed after thumbnailing
-            img.thumbnail(self.image_size, Image.ANTIALIAS)
-            bordered = Image.new('RGBA', self.image_size, (255, 255, 255, 0))
-            bordered.paste(
-                    img,
-                    (
-                        (self.image_size[0] - img.size[0]) / 2,
-                        (self.image_size[1] - img.size[1]) / 2)
-                    )
-            yield bordered.getdata()
+            try:
+                img = Image.open(i)
+                # FIXME: gif images milformed after thumbnailing
+                img.thumbnail(self.image_size, Image.ANTIALIAS)
+                bordered = Image.new(
+                    'RGBA', self.image_size, (255, 255, 255, 0))
+                bordered.paste(
+                        img,
+                        (
+                            (self.image_size[0] - img.size[0]) / 2,
+                            (self.image_size[1] - img.size[1]) / 2)
+                        )
+                yield bordered.getdata()
+            except IOError:
+                continue
 
     def learn(self, root_path, letter):
         for i in self._use_learning_data(root_path):
@@ -79,10 +92,16 @@ class Network(object):
                 v.learn(i, letter)
 
 
-class TestNetworkDefaultQuantity(unittest.TestCase):
+class TestNetwork(unittest.TestCase):
 
     def setUp(self):
         self.network = Network((300, 300), string.ascii_lowercase)
 
     def test_learn(self):
-        self.network.learn("/home/i159/Downloads/learning_data", 'a')
+        self.network.learn("/home/i159/Downloads/learning_data/a", 'a')
+        self.network.learn("/home/i159/Downloads/learning_data/b", 'b')
+
+
+if __name__ == '__main__':
+    network = Network((300, 300), string.ascii_lowercase)
+    network.learn("/home/i159/Downloads/learning_data/a", 'a')
