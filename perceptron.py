@@ -5,7 +5,6 @@ import string
 
 import numpy
 from PIL import Image
-import profilehooks
 import unittest
 
 
@@ -30,27 +29,34 @@ class Neuron(object):
             for i, j in enumerate(difference):
                 self.weights[i] += j
 
-    def _diff_by_color(self, x):
-        for idx in xrange(self.pixel_length):
-            i = x[0][idx]
-            j = x[1][idx]
-            i, j = (i, j) if i < j else (j, i)
-            if i == j == 0:
-                yield 0
-            elif i == 0:
-                yield 1
-            else:
-                yield float(i)/float(j)
+    #def _diff_by_color(self, x):
+        #for idx in xrange(self.pixel_length):
+            #i = x[0][idx]
+            #j = x[1][idx]
+            #i, j = (i, j) if i < j else (j, i)
+            #if i == j == 0:
+                #yield 0
+            #elif i == 0:
+                #yield 1
+            #else:
+                #yield float(i)/float(j)
 
-    def _percent_diff(self, x):
-        return 1 - sum(self._diff_by_color(x)) / float(self.pixel_length)
+    #def _percent_diff(self, x):
+        #return 1 - sum(self._diff_by_color(x)) / float(self.pixel_length)
+    @staticmethod
+    def diff_by_color(item, background):
+        res = item / background
+        res = numpy.sum(res)
+        return 1 - res/3.0
 
     def get_bg_rel_diff(self, input_signal):
-        import pdb; pdb.set_trace()
-        unique_a = numpy.unique(input_signal.view([('', input_signal.dtype)]*input_signal.shape[1]), return_counts=True)
-        #counter = collections.Counter(input_signal)
-        #most_common = counter.most_common()
-        #background = most_common[0]
+        view_shape = [('', input_signal.dtype)]*input_signal.shape[1]
+        view = input_signal.view(view_shape)
+        unique_a = numpy.unique(view, return_counts=True)
+        max_count = unique_a[0][unique_a[1].argmax(axis=0)].tolist()
+        background = numpy.array(max_count, dtype=float)
+        diff = numpy.apply_along_axis(self.diff_by_color, axis=1,
+                arr=input_signal, background=background)
 
         #result = []
         #for i in input_signal:
