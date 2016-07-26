@@ -12,7 +12,7 @@ class Neuron(object):
     def __init__(self, size, letter):
         self.letter = letter
         self.size = size
-        self.weights = [0] * size
+        self.weights = numpy.array([0] * size, dtype=float)
         self.threshold = size / float(1000)
         self.pixel_length = 4
 
@@ -22,32 +22,15 @@ class Neuron(object):
         difference = self.get_bg_rel_diff(input_signal)
         result = self.recognize(difference)
 
-        if result == True and letter != self.letter:
-            for i, j in enumerate(difference):
-                self.weights[i] -= j
-        elif result == False and letter == self.letter:
-            for i, j in enumerate(difference):
-                self.weights[i] += j
+        if result is True and letter != self.letter:
+            self.weights -= difference
+        elif result is False and letter == self.letter:
+            self.weights += difference
 
-    #def _diff_by_color(self, x):
-        #for idx in xrange(self.pixel_length):
-            #i = x[0][idx]
-            #j = x[1][idx]
-            #i, j = (i, j) if i < j else (j, i)
-            #if i == j == 0:
-                #yield 0
-            #elif i == 0:
-                #yield 1
-            #else:
-                #yield float(i)/float(j)
-
-    #def _percent_diff(self, x):
-        #return 1 - sum(self._diff_by_color(x)) / float(self.pixel_length)
     @staticmethod
     def diff_by_color(item, background):
         res = item / background
-        res = numpy.sum(res)
-        return 1 - res/3.0
+        return 1 - numpy.sum(res) / len(res)
 
     def get_bg_rel_diff(self, input_signal):
         view_shape = [('', input_signal.dtype)]*input_signal.shape[1]
@@ -55,22 +38,15 @@ class Neuron(object):
         unique_a = numpy.unique(view, return_counts=True)
         max_count = unique_a[0][unique_a[1].argmax(axis=0)].tolist()
         background = numpy.array(max_count, dtype=float)
-        diff = numpy.apply_along_axis(self.diff_by_color, axis=1,
+        return numpy.apply_along_axis(self.diff_by_color, axis=1,
                 arr=input_signal, background=background)
 
-        #result = []
-        #for i in input_signal:
-            #result.append(self._percent_diff((i, background[0])))
-        #return result
-
     def recognize(self, input_signal):
-        multiplied = (i * j for i, j in zip(input_signal, self.weights))
+        multiplied = input_signal * self.weights
         return sum(multiplied) >= self.threshold
 
 class Network(object):
     def __init__(self, image_size, letters):
-        # Use default quantity or calculate a quantity of neurons during
-        # learning process
         pix_num = image_size[0] * image_size[1]
         self.neurons = [Neuron(pix_num, i) for i in letters]
         self.image_size = image_size
