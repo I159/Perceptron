@@ -2,6 +2,7 @@ import collections
 import cProfile
 import os
 import string
+import pstats, StringIO
 
 import numpy
 from PIL import Image
@@ -29,8 +30,13 @@ class Neuron(object):
 
     @staticmethod
     def diff_by_color(item, background):
-        res = item / background
-        return 1 - numpy.sum(res) / len(res)
+        # TODO: optimize!
+        if not False in (item == background):
+            gt = numpy.maximum(item, background, dtype=float)
+            lt = numpy.minimum(item, background, dtype=float)
+            res = numpy.nan_to_num(lt/gt)
+            return numpy.sum(res) / 4
+        return 0.
 
     def get_bg_rel_diff(self, input_signal):
         view_shape = [('', input_signal.dtype)]*input_signal.shape[1]
@@ -42,8 +48,8 @@ class Neuron(object):
                 arr=input_signal, background=background)
 
     def recognize(self, input_signal):
-        multiplied = input_signal * self.weights
-        return sum(multiplied) >= self.threshold
+        mul_sum = sum(input_signal * self.weights)
+        return mul_sum >= self.threshold
 
 class Network(object):
     def __init__(self, image_size, letters):
@@ -52,7 +58,7 @@ class Network(object):
         self.image_size = image_size
 
     def _use_learning_data(self, root_path):
-        paths = os.listdir(root_path)
+        paths = os.listdir(root_path)[:1]
         file_paths = (os.path.join(root_path, i) for i in paths)
         for i in file_paths:
             try:
@@ -73,7 +79,7 @@ class Network(object):
 
     def learn(self, root_path, letter):
         for i in self._use_learning_data(root_path):
-            for v in self.neurons:
+            for v in self.neurons[:2]:
                 v.learn(i, letter)
 
 
@@ -88,5 +94,15 @@ class TestNetwork(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    pr = cProfile.Profile(subcalls=False)
+    pr.enable()
+
     network = Network((300, 300), string.ascii_lowercase)
     network.learn("/home/i159/Downloads/learning_data/a", 'a')
+
+    pr.disable()
+    s = StringIO.StringIO()
+    sortby = 'cumulative'
+    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    ps.print_stats()
+    print s.getvalue()
