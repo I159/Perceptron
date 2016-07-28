@@ -28,24 +28,14 @@ class Neuron(object):
         elif result is False and letter == self.letter:
             self.weights += difference
 
-    @staticmethod
-    def diff_by_color(item, background):
-        # TODO: optimize!
-        if not False in (item == background):
-            gt = numpy.maximum(item, background, dtype=float)
-            lt = numpy.minimum(item, background, dtype=float)
-            res = numpy.nan_to_num(lt/gt)
-            return numpy.sum(res) / 4
-        return 0.
-
     def get_bg_rel_diff(self, input_signal):
         view_shape = [('', input_signal.dtype)]*input_signal.shape[1]
         view = input_signal.view(view_shape)
         unique_a = numpy.unique(view, return_counts=True)
         max_count = unique_a[0][unique_a[1].argmax(axis=0)].tolist()
         background = numpy.array(max_count, dtype=float)
-        return numpy.apply_along_axis(self.diff_by_color, axis=1,
-                arr=input_signal, background=background)
+        divided = numpy.divide(input_signal, background)
+        # TODO: get mean by axis
 
     def recognize(self, input_signal):
         mul_sum = sum(input_signal * self.weights)
