@@ -6,6 +6,7 @@ import pstats, StringIO
 
 import numpy
 from PIL import Image
+import profilehooks
 import unittest
 
 
@@ -28,14 +29,15 @@ class Neuron(object):
         elif result is False and letter == self.letter:
             self.weights += difference
 
+    @profilehooks.profile
     def get_bg_rel_diff(self, input_signal):
         view_shape = [('', input_signal.dtype)]*input_signal.shape[1]
         view = input_signal.view(view_shape)
         unique_a = numpy.unique(view, return_counts=True)
         max_count = unique_a[0][unique_a[1].argmax(axis=0)].tolist()
         background = numpy.array(max_count, dtype=float)
-        divided = numpy.divide(input_signal, background)
-        # TODO: get mean by axis
+        diff = numpy.absolute(numpy.subtract(input_signal, background)) / 256.0
+        return numpy.mean(diff, axis=1)
 
     def recognize(self, input_signal):
         mul_sum = sum(input_signal * self.weights)
@@ -48,7 +50,7 @@ class Network(object):
         self.image_size = image_size
 
     def _use_learning_data(self, root_path):
-        paths = os.listdir(root_path)[:1]
+        paths = os.listdir(root_path)
         file_paths = (os.path.join(root_path, i) for i in paths)
         for i in file_paths:
             try:
@@ -69,7 +71,7 @@ class Network(object):
 
     def learn(self, root_path, letter):
         for i in self._use_learning_data(root_path):
-            for v in self.neurons[:2]:
+            for v in self.neurons:
                 v.learn(i, letter)
 
 
@@ -83,16 +85,16 @@ class TestNetwork(unittest.TestCase):
         self.network.learn("/home/i159/Downloads/learning_data/b", 'b')
 
 
-if __name__ == '__main__':
-    pr = cProfile.Profile(subcalls=False)
-    pr.enable()
+#if __name__ == '__main__':
+    #pr = cProfile.Profile(subcalls=False)
+    #pr.enable()
 
     network = Network((300, 300), string.ascii_lowercase)
     network.learn("/home/i159/Downloads/learning_data/a", 'a')
 
-    pr.disable()
-    s = StringIO.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print s.getvalue()
+    #pr.disable()
+    #s = StringIO.StringIO()
+    #sortby = 'cumulative'
+    #ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+    #ps.print_stats()
+    #print s.getvalue()
