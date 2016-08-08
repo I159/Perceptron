@@ -1,13 +1,11 @@
-import collections
 import cProfile
 import os
 import string
-import pstats, StringIO
+import unittest
 
 import numpy
 from PIL import Image
 import profilehooks
-import unittest
 
 
 class Neuron(object):
@@ -19,10 +17,8 @@ class Neuron(object):
         self.pixel_length = 4
 
     def learn(self, input_signal, letter):
-        print "Learning of letter -={}=- at the neuron -={}=- with.".format(
-                letter, self.letter)
         difference = self.get_bg_rel_diff(input_signal)
-        result = self.recognize(difference)
+        result = self._recognize(difference)
 
         if result is True and letter != self.letter:
             self.weights -= difference
@@ -39,9 +35,15 @@ class Neuron(object):
         diff = numpy.absolute(numpy.subtract(input_signal, background)) / 256.0
         return numpy.mean(diff, axis=1)
 
-    def recognize(self, input_signal):
+    def _recognize(self, input_signal):
         mul_sum = sum(input_signal * self.weights)
-        return mul_sum >= self.threshold
+        return bool(mul_sum >= self.threshold)
+
+    def recognize(self, input_signal):
+        #print self.letter, set(self.weights)
+        difference = self.get_bg_rel_diff(input_signal)
+        return self._recognize(difference)
+
 
 class Network(object):
     def __init__(self, image_size, letters):
@@ -74,7 +76,15 @@ class Network(object):
             for v in self.neurons:
                 v.learn(i, letter)
 
+    def recognize(self, root_path):
+        for pixel_array in self._use_learning_data(root_path):
+            for neuron in self.neurons:
+                result = neuron.recognize(pixel_array)
+                if result is True:
+                    yield neuron.letter
 
+
+# TODO: Think about learning strategy.
 class TestNetwork(unittest.TestCase):
 
     def setUp(self):
@@ -85,12 +95,22 @@ class TestNetwork(unittest.TestCase):
         self.network.learn("/home/i159/Downloads/learning_data/b", 'b')
 
 
-#if __name__ == '__main__':
+if __name__ == '__main__':
     #pr = cProfile.Profile(subcalls=False)
     #pr.enable()
 
     network = Network((300, 300), string.ascii_lowercase)
     network.learn("/home/i159/Downloads/learning_data/a", 'a')
+    network.learn("/home/i159/Downloads/learning_data/b", 'b')
+    network.learn("/home/i159/Downloads/learning_data/a", 'a')
+
+    for i in network.recognize("/home/i159/Downloads/test_data/a"):
+        if i:
+            print i
+    print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+    for i in network.recognize("/home/i159/Downloads/test_data/w"):
+        if i:
+            print i
 
     #pr.disable()
     #s = StringIO.StringIO()
