@@ -11,12 +11,13 @@ import profilehooks
 class Neuron(object):
     def __init__(self, size, letter):
         self.letter = letter
-        self.size = size
+        self.size = float(size)
         self.weights = numpy.array([0] * size, dtype=float)
-        self.threshold = size / float(1000)
+        self.threshold = self.size * 2.5 # / float(33)
         self.pixel_length = 4
 
     def learn(self, input_signal, letter):
+        self.inc_letter = letter
         difference = self.get_bg_rel_diff(input_signal)
         result = self._recognize(difference)
 
@@ -37,10 +38,11 @@ class Neuron(object):
 
     def _recognize(self, input_signal):
         mul_sum = sum(input_signal * self.weights)
-        return bool(mul_sum >= self.threshold)
+        decision = bool(mul_sum >= self.threshold)
+        return decision
 
-    def recognize(self, input_signal):
-        #print self.letter, set(self.weights)
+    def recognize(self, input_signal, letter=None):
+        self.inc_letter = letter
         difference = self.get_bg_rel_diff(input_signal)
         return self._recognize(difference)
 
@@ -62,29 +64,30 @@ class Network(object):
                 bordered = Image.new(
                     'RGBA', self.image_size, (255, 255, 255, 0))
                 bordered.paste(
-                        img,
-                        (
-                            (self.image_size[0] - img.size[0]) / 2,
-                            (self.image_size[1] - img.size[1]) / 2)
-                        )
+                    img,
+                    (
+                        (self.image_size[0] - img.size[0]) / 2,
+                        (self.image_size[1] - img.size[1]) / 2)
+                    )
                 yield numpy.array(bordered.getdata(), dtype=float, ndmin=2)
             except IOError:
                 continue
 
     def learn(self, root_path, letter):
+        print "Learning"
         for i in self._use_learning_data(root_path):
             for v in self.neurons:
                 v.learn(i, letter)
 
-    def recognize(self, root_path):
+    def recognize(self, root_path, letter=None):
+        print "Recognition {}".format(letter)
         for pixel_array in self._use_learning_data(root_path):
             for neuron in self.neurons:
-                result = neuron.recognize(pixel_array)
+                result = neuron.recognize(pixel_array, letter)
                 if result is True:
                     yield neuron.letter
 
 
-# TODO: Think about learning strategy.
 class TestNetwork(unittest.TestCase):
 
     def setUp(self):
@@ -102,15 +105,11 @@ if __name__ == '__main__':
     network = Network((300, 300), string.ascii_lowercase)
     network.learn("/home/i159/Downloads/learning_data/a", 'a')
     network.learn("/home/i159/Downloads/learning_data/b", 'b')
-    network.learn("/home/i159/Downloads/learning_data/a", 'a')
 
-    for i in network.recognize("/home/i159/Downloads/test_data/a"):
-        if i:
-            print i
-    print "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-    for i in network.recognize("/home/i159/Downloads/test_data/w"):
-        if i:
-            print i
+    for i in network.recognize("/home/i159/Downloads/test_data/a", 'a'):
+        print i
+    for i in network.recognize("/home/i159/Downloads/test_data/w", 'b'):
+        print i
 
     #pr.disable()
     #s = StringIO.StringIO()
