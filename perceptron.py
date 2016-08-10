@@ -16,13 +16,13 @@ class Neuron(object):
         self.threshold = self.size * 2.5 # / float(33)
         self.pixel_length = 4
 
-    def learn(self, input_signal, decision):
+    def learn(self, input_signal, correct_answer):
         difference = self.get_bg_rel_diff(input_signal)
         result = self._recognize(difference)
 
-        if result is True and decision is False:
+        if result is True and correct_answer is False:
             self.weights -= difference
-        elif result is False and decision is True:
+        elif result is False and correct_answer is True:
             self.weights += difference
 
     @profilehooks.profile
@@ -50,54 +50,45 @@ class Neuron(object):
 class Network(object):
     def __init__(self, image_size, letters):
         pix_num = image_size[0] * image_size[1]
-        self.neurons = [Neuron(pix_num, i) for i in letters]
+        self.neurons = {i: Neuron(pix_num, i) for i in letters}
         self.image_size = image_size
 
-    def _use_learning_data(self, true_path, false_path):
-        true_paths = os.listdir(true_path)
-        false_paths = os.listdir(false_path)
-        true_file_paths = (os.path.join(true_path, i) for i in true_paths)
-        false_file_paths = (os.path.join(false_path, i) for i in false_paths)
-        file_paths = zip(true_file_paths, false_file_paths)
-        for true, false in file_paths:
+    def _get_pixel_array(self, path):
+        file_paths = (os.path.join(path, i) for i in os.listdir(path))
+        for pth in file_paths:
             try:
-                true_img = Image.open(true)
-                false_img = Image.open(false)
-                # FIXME: gif images milformed after thumbnailing
-                true_img.thumbnail(self.image_size, Image.ANTIALIAS)
-                false_img.thumbnail(self.image_size, Image.ANTIALIAS)
-                true_bordered = Image.new(
+                img = Image.open(pth)
+                img.thumbnail(self.image_size, Image.ANTIALIAS)
+                bordered = Image.new(
                     'RGBA', self.image_size, (255, 255, 255, 0))
-                false_bordered = Image.new(
-                    'RGBA', self.image_size, (255, 255, 255, 0))
-                true_bordered.paste(
-                   true_img,
+                bordered.paste(
+                    img,
                     (
-                        (self.image_size[0] - true_img.size[0]) / 2,
-                        (self.image_size[1] - true_img.size[1]) / 2)
+                        (self.image_size[0] - img.size[0]) / 2,
+                        (self.image_size[1] - img.size[1]) / 2)
                     )
-                false_bordered.paste(
-                    false_img,
-                    (
-                        (self.image_size[0] - false_img.size[0]) / 2,
-                        (self.image_size[1] - false_img.size[1]) / 2)
-                    )
-                yield (numpy.array(true_bordered.getdata(), dtype=float, ndmin=2),
-                       numpy.array(false_bordered.getdata(), dtype=float, ndmin=2))
-            except IOError:
+                yield numpy.array(bordered.getdata(), dtype=float, ndmin=2)
+            except IOError as err_msg:
+                print err_msg
                 continue
 
-    def learn(self, true_path, false_path):
+    def _use_learning_data(self, true_path, false_path):
+        true_pxls = self._get_pixel_array(true_path)
+        false_pxls = self._get_pixel_array(false_path)
+        while True:
+            yield next(true_pxls), next(false_pxls)
+
+    def learn(self, true_path, false_path, letter):
         print "Learning"
+        neuron = self.neurons[letter]
         for true, false in self._use_learning_data(true_path, false_path):
-            for v in self.neurons:
-                v.learn(true, True)
-                v.learn(false, False)
+            neuron.learn(true, True)
+            neuron.learn(false, False)
 
     def recognize(self, root_path, letter=None):
         print "Recognition {}".format(letter)
-        for pixel_array in self._use_learning_data(root_path):
-            for neuron in self.neurons:
+        for pixel_array in self._get_pixel_array(root_path):
+            for neuron in self.neurons.itervalues():
                 result = neuron.recognize(pixel_array, letter)
                 if result is True:
                     yield neuron.letter
@@ -118,12 +109,17 @@ if __name__ == '__main__':
     #pr.enable()
 
     network = Network((300, 300), string.ascii_lowercase)
-    network.learn("/home/i159/Downloads/learning_data/a", 'a')
-    network.learn("/home/i159/Downloads/learning_data/b", 'b')
+    a_true_path = "/home/i159/Dropbox/learning_data/a_true"
+    a_false_path = "/home/i159/Dropbox/learning_data/a_false"
+    b_true_path = "/home/i159/Dropbox/learning_data/b_true"
+    b_false_path = "/home/i159/Dropbox/learning_data/b_false"
 
-    for i in network.recognize("/home/i159/Downloads/test_data/a", 'a'):
+    network.learn(a_true_path, a_false_path, 'a')
+    network.learn(b_true_path, b_false_path, 'b')
+
+    for i in network.recognize("/home/i159/Dropbox/test_data/a", 'a'):
         print i
-    for i in network.recognize("/home/i159/Downloads/test_data/w", 'b'):
+    for i in network.recognize("/home/i159/Dropbox/test_data/b", 'b'):
         print i
 
     #pr.disable()
