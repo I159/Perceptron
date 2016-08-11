@@ -100,7 +100,7 @@ class Neuron(object):
 class Network(object):
 
     def __init__(self, img_size=(300, 300)):
-        self.img_size = img_size
+        self.img_size = ImageSize(*img_size)
         self.neurons = {
             i: Neuron(self.img_size, i) for i in string.ascii_lowercase}
 
