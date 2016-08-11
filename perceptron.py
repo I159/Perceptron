@@ -13,7 +13,7 @@ import profilehooks
 ImageSize = collections.namedtuple('ImageSize', ('X', 'Y'))
 
 
-class Sensor(numpy.array):
+class Sensor(numpy.ndarray):
     """`S` elements wrapped to a single object"""
 
     def __init__(self, image_file_path, size):
@@ -38,7 +38,7 @@ class Sensor(numpy.array):
         return bordered
 
 
-class Associative(numpy.array):
+class Associative(numpy.ndarray):
     """`A` elements wrapped to a single object"""
 
     def __array_finalize__(self, obj):
