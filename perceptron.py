@@ -42,12 +42,16 @@ class Sensor(numpy.ndarray):
 
 class Associative(numpy.ndarray):
     """`A` elements wrapped to a single object"""
+    #def __new__(cls, shape, dtype, buffer):
+        #import pdb; pdb.set_trace()
 
     def __array_finalize__(self, obj):
-        background = self._get_background(self)
-        diff = numpy.subtract(self, background)
-        abs_diff = numpy.absolute(diff) / 256.0
-        return numpy.mean(abs_diff, axis=1)
+        if obj is None:
+            background = self._get_background(numpy.array(self))
+            diff = numpy.subtract(self, background)
+            abs_diff = numpy.absolute(diff) / 256.0
+            return numpy.mean(abs_diff, axis=1)
+        return obj
 
     def _get_background(self, input_signal):
         view_shape = [('', input_signal.dtype)]*input_signal.shape[1]
@@ -59,21 +63,15 @@ class Associative(numpy.ndarray):
 
 class Reaction(object):
     def __init__(self, threshold, weights, diff):
-        self.diff = sum(diff * weights)
-        self.threshold = threshold
-        self.__bool = None
-
-    def __bool__(self):
-        return self.__nonzero__()
+        self.__bool__ = sum(diff * weights) >= threshold
 
     def __nonzero__(self):
-        if not self.__bool:
-            self.__bool = self.diff >= self.threshold
-        return self.__bool
+        return self.__bool__
 
 
 class Neuron(object):
     def __init__(self, size, letter, threshold_coefficient=2.5):
+        print "Init neuron"
         self.letter = letter
         self.size = size
         self.flat_size = size.X * size.Y
@@ -82,11 +80,13 @@ class Neuron(object):
         self.bg_diff = None
 
     def _decide(self, file_path):
+        "Print decide"
         pixel_array = Sensor(file_path, self.size)
         self.bg_diff = Associative(shape=(4, self.flat_size), buffer=pixel_array)
         return Reaction(self.threshold, self.weights, self.bg_diff)
 
     def learn(self, file_path, correct_answer):
+        print "Learn"
         decision = self._decide(file_path)
 
         if decision is True and correct_answer is False:
@@ -95,6 +95,7 @@ class Neuron(object):
             self.weights += self.bg_diff
 
     def recognize(self, file_path):
+        print "Recognize"
         decision = self._decide(file_path)
         return (decision and self.letter) or False
 
@@ -111,13 +112,17 @@ class Network(object):
         return (os.path.join(path, i) for i in os.listdir(path))
 
     def learn(self, true_path, false_path, letter):
+        print "learn letter {}".format(letter)
         neuron = self.neurons[letter]
         true_imgs = self._image_paths(true_path)
         false_imgs = self._image_paths(false_path)
 
         while True:
-            neuron.learn(next(true_imgs), True)
-            neuron.learn(next(false_imgs), False)
+            try:
+                neuron.learn(next(true_imgs), True)
+                neuron.learn(next(false_imgs), False)
+            except StopIteration:
+                break
 
     def recognize(self, root_path):
         for path in self._image_paths(root_path):
