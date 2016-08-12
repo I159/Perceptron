@@ -15,25 +15,27 @@ ImageSize = collections.namedtuple('ImageSize', ('X', 'Y'))
 
 class Sensor(numpy.ndarray):
     """`S` elements wrapped to a single object"""
+    def __new__(cls, image_file_path, size):
+        cls.size = size
+        cls.image_size = ImageSize(*size)
+        return numpy.array(
+            cls._perceive(image_file_path),
+            dtype=types.FloatType,
+            ndmin=2)
 
-    def __init__(self, image_file_path, size):
-        self.size = size
-        self.image_size = ImageSize(*self.image_size)
-        self.ndmin = 2
-        self.dtype = types.FloatType
-        super(Sensor, self).__init__(self._perceive(image_file_path))
-
-    def _perceive(self, file_path):
+    @classmethod
+    def _perceive(cls, file_path):
         image = Image.open(file_path)
-        standardized_image = self._standardize_size(image)
-        return numpy.array(standardized_image.get_data(), dtype=float, ndmin=2)
+        standardized_image = cls._standardize_size(image)
+        return standardized_image.getdata()
 
-    def _standardize_size(self, image):
-        image.thumbnail(self.image_size, Image.ANTIALIAS)
-        bordered = Image.new('RGBA', self.size, (255, 255, 255, 0))
+    @classmethod
+    def _standardize_size(cls, image):
+        image.thumbnail(cls.image_size, Image.ANTIALIAS)
+        bordered = Image.new('RGBA', cls.size, (255, 255, 255, 0))
         borders_size = (
-            (self.image_size[0] - image.size[0]) / 2,
-            (self.image_size[1] - image.size[1]) / 2)
+            (cls.image_size[0] - image.size[0]) / 2,
+            (cls.image_size[1] - image.size[1]) / 2)
         bordered.paste(image, borders_size)
         return bordered
 
@@ -42,8 +44,8 @@ class Associative(numpy.ndarray):
     """`A` elements wrapped to a single object"""
 
     def __array_finalize__(self, obj):
-        background = self._get_background(obj)
-        diff = numpy.subtract(obj, background)
+        background = self._get_background(self)
+        diff = numpy.subtract(self, background)
         abs_diff = numpy.absolute(diff) / 256.0
         return numpy.mean(abs_diff, axis=1)
 
@@ -81,7 +83,7 @@ class Neuron(object):
 
     def _decide(self, file_path):
         pixel_array = Sensor(file_path, self.size)
-        self.bg_diff = Associative(pixel_array)
+        self.bg_diff = Associative(shape=(4, self.flat_size), buffer=pixel_array)
         return Reaction(self.threshold, self.weights, self.bg_diff)
 
     def learn(self, file_path, correct_answer):
