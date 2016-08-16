@@ -2,6 +2,7 @@ import os
 import string
 
 import numpy
+from pymongo import MongoClient
 
 from elements import Associative
 from elements import ImageSize
@@ -11,12 +12,32 @@ from elements import Sensor
 
 class Neuron(object):
     def __init__(self, size, letter, threshold_coefficient=2.5):
+        mongod = MongoClient()
+        self.db = mongod.perceptron_db
         self.letter = letter
         self.size = size
         self.shape = (size.X * size.Y, 4)
         self.weights = numpy.zeros(self.shape)
         self.threshold = self.shape[0] * threshold_coefficient
         self.bg_diff = None
+        self.__weights = None
+
+    @property
+    def weights(self):
+        if not self.__weights:
+            self.__weights = self.db.weights.find_one({"letter": self.letter})
+            if not self.__weights:
+                self.__weights = self.db.weights.insert_one(
+                    {
+                        "letter": self.letter,
+                        "weights": numpy.zeros(self.shape)
+                    })
+        return self.__weights
+
+    @weights.setter
+    def weights(self, weights):
+        self.__weights = self.db.weights.update_one(
+                {'letter': self.letter}, {'weights': weights})
 
     def _decide(self, file_path):
         pixel_array = Sensor(file_path, self.size)
@@ -27,9 +48,12 @@ class Neuron(object):
         positive = self._decide(file_path)
 
         if positive and correct_answer is False:
-            self.weights -= self.bg_diff
+            weights = self.weights['weights'] - self.bg_diff
         elif not positive and correct_answer is True:
-            self.weights += self.bg_diff
+            weights = self.weights['weights'] + self.bg_diff
+        else:
+            return
+        self.weights = weights
 
     def recognize(self, file_path):
         decision = self._decide(file_path)
