@@ -1,8 +1,11 @@
+import cPickle
+from bson.binary import Binary
 import os
 import string
 import types
 
 import numpy
+from profilehooks import profile
 from pymongo import MongoClient
 
 from elements import Associative
@@ -14,37 +17,45 @@ from elements import Sensor
 class Neuron(object):
     def __init__(self, size, letter, threshold_coefficient=2.5):
         mongod = MongoClient()
-        self.db = mongod.perceptron_db
+        self.table = mongod.perceptron_db.weights
         self.letter = letter
         self.size = size
         self.shape = (size.X * size.Y, 4)
         self.weights = numpy.zeros(self.shape)
         self.threshold = self.shape[0] * threshold_coefficient
         self.bg_diff = None
-        self._weights = None
+        self.__weights = numpy.array(
+            cPickle.loads(
+                self.table.find_one({"letter": self.letter})['weights']),
+            dtype=types.FloatType)
 
     @property
     def weights(self):
-        self._weights = self.db.weights.find_one({"letter": self.letter})
-        if not self._weights:
-            self.db.weights.insert_one(
+        if self.__weights is None:
+            self.table.insert_one(
                 {
                     "letter": self.letter,
-                    "weights": numpy.zeros(self.shape).tolist()
+                    "weights": Binary(cPickle.dumps(numpy.zeros(self.shape), protocol=2))
                 })
-            self._weights = self.db.weights.find_one({"letter": self.letter})
-        return numpy.array(self._weights['weights'], dtype=types.FloatType)
+            self.__weights = self.table.find_one({"letter": self.letter})
+            self.__weights = cPickle.loads(self.__weights['weights'])
+        return self.__weights
 
     @weights.setter
     def weights(self, weights):
-        self.db.weights.update_one(
-            {'letter': self.letter}, {"$set": {'weights': weights.tolist()}})
+        weights = Binary(cPickle.dumps(weights, protocol=2))
+        self.table.update_one(
+            {'letter': self.letter}, {"$set": {'weights': weights}})
+        self.__weights = self.table.find_one({"letter": self.letter})
+        self.__weights = cPickle.loads(self.__weights['weights'])
+        return self.__weights
 
     def _decide(self, file_path):
         pixel_array = Sensor(file_path, self.size)
         self.bg_diff = Associative(pixel_array)
         return Reaction(self.threshold, self.weights, self.bg_diff)
 
+    @profile
     def learn(self, file_path, correct_answer):
         positive = self._decide(file_path)
 
@@ -56,6 +67,7 @@ class Neuron(object):
             return
         self.weights = weights
 
+    @profile
     def recognize(self, file_path):
         decision = self._decide(file_path)
         return (decision and self.letter) or False
