@@ -1,11 +1,10 @@
 import cPickle
-from bson.binary import Binary
 import os
 import string
 import types
 
+from bson.binary import Binary
 import numpy
-from profilehooks import profile
 from pymongo import MongoClient
 
 from elements import Associative
@@ -35,7 +34,8 @@ class Neuron(object):
             self.table.insert_one(
                 {
                     "letter": self.letter,
-                    "weights": Binary(cPickle.dumps(numpy.zeros(self.shape), protocol=2))
+                    "weights": Binary(cPickle.dumps(
+                        numpy.zeros(self.shape), protocol=2))
                 })
             self.__weights = self.table.find_one({"letter": self.letter})
             self.__weights = cPickle.loads(self.__weights['weights'])
@@ -55,7 +55,6 @@ class Neuron(object):
         self.bg_diff = Associative(pixel_array)
         return Reaction(self.threshold, self.weights, self.bg_diff)
 
-    @profile
     def learn(self, file_path, correct_answer):
         positive = self._decide(file_path)
 
@@ -67,7 +66,6 @@ class Neuron(object):
             return
         self.weights = weights
 
-    @profile
     def recognize(self, file_path):
         decision = self._decide(file_path)
         return (decision and self.letter) or False
