@@ -51,8 +51,16 @@ class Neuron(object):
         raise NotImplementedError
 
 
-class InputNeuron(Neuron):
-    pass
+class InputNeuron(object):
+    def __init__(self, inputn, hidden, shape=(90000, 4)):
+        self.inputn = inputn
+        self.hidden = hidden
+        self.shape = shape
+
+    def perceive(self, input_):
+        # Input neuron just perceives: determines background and returns
+        # difference between object and background.
+        raise NotImplementedError
 
 
 class HiddenNeuron(Neuron):
@@ -61,3 +69,26 @@ class HiddenNeuron(Neuron):
 
 class OutputNeuron(Neuron):
     pass
+
+
+class Network(object):
+    def __init__(self, layer_size):
+        self.layer_size = layer_size
+        self.input_neurons = map(self.create_input, xrange(self.layer_size))
+        self.hidden_neurons = map(self.create_hidden, xrange(self.layer_size))
+        self.outpur_neurons = map(self.create_output, xrange(self.layer_size))
+
+    def create_input(self, idx):
+        raise NotImplementedError
+
+    def create_hidden(self, idx):
+        raise NotImplementedError
+
+    def create_output(self, idx):
+        raise NotImplementedError
+
+    def learn(self):
+        raise NotImplementedError
+
+    def recognise(self):
+        raise NotImplementedError
