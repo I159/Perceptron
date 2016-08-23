@@ -44,8 +44,8 @@ class Associative(numpy.ndarray):
         abs_diff = numpy.absolute(diff) / 256.0
         return abs_diff
 
-    @classmethod
-    def _get_background(self, input_signal):
+    @staticmethod
+    def _get_background(input_signal):
         view_shape = [('', input_signal.dtype)]*input_signal.shape[1]
         view = input_signal.view(view_shape)
         unique_a = numpy.unique(view, return_counts=True)
