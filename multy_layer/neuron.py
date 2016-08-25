@@ -9,11 +9,15 @@ import numpy as np
 class Neuron(object):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, inputn, hidden, shape=(90000, 4)):
+    def __init__(
+            self, inputn, hidden, offset, shape=(90000, 4), inc_weights=None):
         self.inputn = inputn
         self.hidden = hidden
         self.shape = shape
-        self.__weights = None
+        self.inc_weights = inc_weights
+        self.offset = offset
+        self.l_velocity = .5
+        self.__outc_weights = None
 
     def _nguyen_widerow(self, weights):
         sc_factor = .7 * pow(self.hidden, 1.0/self.inputn)
@@ -21,39 +25,40 @@ class Neuron(object):
         denominator = np.power(np.sum(np.squere(weights), axis=1), .5)
         return numerator / denominator
 
-    def weights(self):
-        if not self.__weights:
-            randomw = np.random.uniform(-0.5, 0.5, self.shape)
-            slices = (randomw[i] for i in range(self.shape[0]))
-            self.__weights = map(self._nguyen_widerow, slices)
-        return self.__weights
+    def _init_weights(self):
+        randomw = np.random.uniform(-0.5, 0.5, self.shape)
+        slices = (randomw[i] for i in range(self.shape[0]))
+        self.__weights = map(self._nguyen_widerow, slices)
 
-    def activation_function(self, input_):
-        weighted = np.multiply(input_, self.weights)
+    def outc_weights(self):
+        if not self.__outc_weights:
+            self.__outc_weights = self._init_weights()
+        return self.__outc_weights
+
+    def differentiate(self, input_):
+        act = self.activation(input_)
+        return act * (1 - act)
+
+    def activation(self, input_):
+        weighted = np.multiply(input_, self.outc_weights)
         return 1. / (1 + math.exp(-sum(weighted)))
 
     def learn(self, input_, correct):
-        raise NotImplementedError
+        error = np.multiply((correct - input_), self.differentiate(input_))
+        offset_corr = np.multily(self.l_velocity, error)
+        weights_corr = np.multiply(offset_corr, input_)
+        self.inc_weights = self.inc_weights + weights_corr
+        self.offset -= offset_corr
 
-    @abc.abstractmethod
+        return error
+
     def perceive(self, input_):
-        # Different types of neurons perceive different types of data.
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def output(self):
-        # Different types of neurons implement different behavior.
-        # Input neuron just returns perceived information to a hidden levels of
-        # neurons.
-        # Hidden neuron returns a weighted signals to a next level of hidden
-        # neurons or an output level.
-        # Output neuron returns a decision.
-        #return self.activation_function(input_) > .5
-        raise NotImplementedError
+        weighted = np.multiply(input_, self.outc_weights)
+        return self.activation(self.offset + sum(weighted))
 
 
 class InputNeuron(object):
-    def __init__(self, inputn, hidden, shape=(90000, 4)):
+    def __init__(self, element, inputn, hidden, shape=(90000, 4)):
         self.inputn = inputn
         self.hidden = hidden
         self.shape = shape
@@ -89,42 +94,34 @@ class InputNeuron(object):
         return abs_diff
 
 
-class HiddenNeuron(Neuron):
-    def perceive(self, input_):
-        raise NotImplementedError
-
-    def output(self):
-        raise NotImplementedError
-
-
 class OutputNeuron(Neuron):
-    def __init__(self, init_data, *args):
-        # Init output
-        super(OutputNeuron, self).__init__(*args)
-
-    def perceive(self, input_):
-        raise NotImplementedError
-
-    def output(self):
-        raise NotImplementedError
+    def learn(self, input_, correct):
+        error = super(OutputNeuron, self).learn(input_, correct)
+        idx = 0
+        while True:
+            try:
+                self.hidden[idx].learn(error[idx])
+                idx += 1
+            except IndexError:
+                break
 
 
 class Network(object):
-    def __init__(self, layer_size, output_init_data):
-        self.layer_size = layer_size
-        self.io_size = len(output_init_data)
-        self.input_layer = map(self.create_input, xrange(self.io_size))
-        self.hidden_layer = map(self.create_hidden, xrange(self.layer_size))
-        self.output_layer = map(self.create_output, output_init_data)
+    def __init__(self, init_data):
+        self.layer_size = len(init_data)
+        self.input_layer = map(self.create_input, init_data)
+        self.hidden_layer = map(self.create_hidden, init_data)
+        self.output_layer = map(self.create_output, init_data)
 
-    def create_input(self, idx):
-        return InputNeuron(self.io_size, self.layer_size)
+    def create_input(self, element):
+        return InputNeuron(element, self.layer_size, self.layer_size)
 
     def create_hidden(self, idx):
-        return HiddenNeuron(self.io_size, self.layer_size)
+        return Neuron(self.input_layer, self.layer_size, self.layer_size)
 
-    def create_output(self, init_data):
-        return OutputNeuron(init_data, self.io_size, self.layer_size)
+    def create_output(self, idx):
+        return OutputNeuron(
+            self.hidden_layer, self.layer_size, self.layer_size)
 
     def learn(self):
         raise NotImplementedError
