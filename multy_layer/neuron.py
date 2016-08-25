@@ -123,10 +123,16 @@ class Network(object):
         return OutputNeuron(
             self.hidden_layer, self.layer_size, self.layer_size)
 
-    def learn(self):
+    def learn(self, root_path):
         raise NotImplementedError
+        # for i in paths_in_root_dir:
+            #input_ = (neuron.learn(file_path) for neuron in self.input_layer)
+            #hidden = (neuron.learn(input_) for neuron in self.hidden_layer)
+            #out = (neuron.learn(hidden) for neuron in self.output_layer)
+            #if math.sqrt(pow(out, 2)) <= self.sqrt_lim:
+            #    break
 
     def recognise(self, file_path):
-        input_ = (neuron.perceive for neuron in self.input_layer)
+        input_ = (neuron.perceive(file_path) for neuron in self.input_layer)
         hidden = (neuron.perceive(input_) for neuron in self.hidden_layer)
         return (neuron.perceive(hidden) for neuron in self.output_layer)
