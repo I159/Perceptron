@@ -1,35 +1,36 @@
 import abc
 import math
-from pillow import Image
+from PIL import Image
 import unittest
 
 import numpy as np
 
 
-class Neuron(object):
-    __metaclass__ = abc.ABCMeta
+class HiddenNeuron(object):
 
     def __init__(
-            self, inputn, hidden, offset, shape=(90000, 4), inc_weights=None):
-        self.inputn = inputn
-        self.hidden = hidden
-        self.shape = shape
+            self, input_n, hidden_n, outc_n, offset=.5, inc_weights=None):
+        self.inputn = input_n
+        self.hidden = hidden_n
+        self.outc_n = outc_n
         self.inc_weights = inc_weights
         self.offset = offset
         self.l_velocity = .5
         self.__outc_weights = None
 
-    def _nguyen_widerow(self, weights):
+    def _nguyen_widerow(self, widx):
         sc_factor = .7 * pow(self.hidden, 1.0/self.inputn)
-        numerator = sc_factor * weights
-        denominator = np.power(np.sum(np.squere(weights), axis=1), .5)
+        numerator = np.multiply(self.__outc_weights[widx], sc_factor)
+        denominator = np.square(self.__outc_weights[:widx+1])
+        denominator = np.sum(denominator)
+        denominator = math.sqrt(denominator)
         return numerator / denominator
 
     def _init_weights(self):
-        randomw = np.random.uniform(-0.5, 0.5, self.shape)
-        slices = (randomw[i] for i in range(self.shape[0]))
-        self.__weights = map(self._nguyen_widerow, slices)
+        self.__outc_weights = np.random.uniform(-0.5, 0.5, self.outc_n)
+        return map(self._nguyen_widerow, xrange(self.outc_n))
 
+    @property
     def outc_weights(self):
         if not self.__outc_weights:
             self.__outc_weights = self._init_weights()
@@ -94,7 +95,7 @@ class InputNeuron(object):
         return abs_diff
 
 
-class OutputNeuron(Neuron):
+class OutputNeuron(HiddenNeuron):
     def learn(self, input_, correct):
         error = super(OutputNeuron, self).learn(input_, correct)
         idx = 0
@@ -117,7 +118,7 @@ class Network(object):
         return InputNeuron(element, self.layer_size, self.layer_size)
 
     def create_hidden(self, idx):
-        return Neuron(self.input_layer, self.layer_size, self.layer_size)
+        return HiddenNeuron(self.input_layer, self.layer_size, self.layer_size)
 
     def create_output(self, idx):
         return OutputNeuron(
@@ -136,3 +137,10 @@ class Network(object):
         input_ = (neuron.perceive(file_path) for neuron in self.input_layer)
         hidden = (neuron.perceive(input_) for neuron in self.hidden_layer)
         return (neuron.perceive(hidden) for neuron in self.output_layer)
+
+
+class TestInitWeights(unittest.TestCase):
+    def test_init_hidden_neuron(self):
+        neuron = HiddenNeuron(28, 90000, 28)
+        import pdb; pdb.set_trace()
+        assert len(neuron.outc_weights) == 28
