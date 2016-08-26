@@ -1,4 +1,3 @@
-import abc
 import math
 from PIL import Image
 import unittest
@@ -96,6 +95,12 @@ class InputNeuron(object):
 
 
 class OutputNeuron(HiddenNeuron):
+    # TODO: output neuron features
+    # * return response
+    # * take correct answer and pass it to a hidden neuron to perform weights
+    # computation
+
+    # As an alternative option - compute weights backwards.
     def learn(self, input_, correct):
         error = super(OutputNeuron, self).learn(input_, correct)
         idx = 0
@@ -140,7 +145,14 @@ class Network(object):
 
 
 class TestInitWeights(unittest.TestCase):
+    def test_init_input_neuron(self):
+        neuron = InputNeuron('a', 28, 90000)
+
     def test_init_hidden_neuron(self):
         neuron = HiddenNeuron(28, 90000, 28)
-        import pdb; pdb.set_trace()
         assert len(neuron.outc_weights) == 28
+
+    def test_init_output_neuron(self):
+        # TODO: create separated outcome neuron and remove specific outcome
+        # features from hidden neuron.
+        unittest.skip("Not implemented.")
