@@ -5,6 +5,47 @@ import unittest
 import numpy as np
 
 
+class OutputNeuron(object):
+    def __init__(self, hidden_layer, inputn, outpn, l_velocity):
+        self.outpn = outpn
+        self.l_velocity = l_velocity
+        self.hidden_n = len(hidden_layer)
+        self.inputn = inputn
+        self.hidden_layer = hidden_layer
+        self.inc_weights = map(lambda x: x.outc_weights[self], hidden_layer)
+
+    def _nguyen_widerow(self, widx):
+        sc_factor = .7 * pow(self.hidden_n, 1.0/self.inputn)
+        numerator = np.multiply(self.inc_weights[widx], sc_factor)
+        denominator = np.square(self.inc_weights[:widx+1])
+        denominator = np.sum(denominator)
+        denominator = math.sqrt(denominator)
+        return numerator / denominator
+
+    def differentiate(self, input_):
+        act = self.activation(input_)
+        return act * (1 - act)
+
+    def activation(self, input_):
+        weighted = np.multiply(input_, self.inc_weights)
+        return 1. / (1 + math.exp(-sum(weighted)))
+
+    def learn(self, input_, correct):
+        error = np.multiply((correct - input_), self.differentiate(input_))
+        offset_corr = np.multily(self.l_velocity, error)
+        weights_corr = np.multiply(offset_corr, input_)
+
+        for i in self.hidden_layer:
+            i.learn(error)
+
+        self._change_weights(weights_corr)
+
+    def _change_weights(self, correction):
+        self.inc_weights = np.add(
+            np.array(self.inc_weights.itervalues),
+            correction)
+
+
 class HiddenNeuron(object):
 
     def __init__(
@@ -16,6 +57,7 @@ class HiddenNeuron(object):
         self.offset = offset
         self.l_velocity = .5
         self.__outc_weights = None
+        self.output_errors = []
 
     def _nguyen_widerow(self, widx):
         sc_factor = .7 * pow(self.hidden, 1.0/self.inputn)
@@ -39,18 +81,27 @@ class HiddenNeuron(object):
         act = self.activation(input_)
         return act * (1 - act)
 
-    def activation(self, input_):
-        weighted = np.multiply(input_, self.outc_weights)
-        return 1. / (1 + math.exp(-sum(weighted)))
+    def activation(self, weighted_sum):
+        return 1. / (1 + math.exp(-weighted_sum))
 
-    def learn(self, input_, correct):
-        error = np.multiply((correct - input_), self.differentiate(input_))
-        offset_corr = np.multily(self.l_velocity, error)
-        weights_corr = np.multiply(offset_corr, input_)
-        self.inc_weights = self.inc_weights + weights_corr
-        self.offset -= offset_corr
+    def learn(self, error):
+        self.output_errors.append(error)
+        if len(self.output_errors) == self.outc_n:
+            self.output_errors = np.array(self.output_errors)
+            weighted_sum = sum(
+                np.multiply(self.output_errors,
+                self.outc_weights))
+            activation = self.activation(sum(weighted_sum))
+            hidden_error = activation * weighted_sum
+            weights_correction = np.multiply(
+                self.output_errors,
+                self.l_velocity * hidden_error)
 
-        return error
+            self._change_weights(weights_correction)
+
+    def _change_weights(self, correction):
+        # TODO: backward change weights liked to an input level.
+        raise NotImplementedError
 
     def perceive(self, input_):
         weighted = np.multiply(input_, self.outc_weights)
@@ -92,24 +143,6 @@ class InputNeuron(object):
         diff = np.subtract(rgba, background)
         abs_diff = np.absolute(diff) / 256.0
         return abs_diff
-
-
-class OutputNeuron(HiddenNeuron):
-    # TODO: output neuron features
-    # * return response
-    # * take correct answer and pass it to a hidden neuron to perform weights
-    # computation
-
-    # As an alternative option - compute weights backwards.
-    def learn(self, input_, correct):
-        error = super(OutputNeuron, self).learn(input_, correct)
-        idx = 0
-        while True:
-            try:
-                self.hidden[idx].learn(error[idx])
-                idx += 1
-            except IndexError:
-                break
 
 
 class Network(object):
