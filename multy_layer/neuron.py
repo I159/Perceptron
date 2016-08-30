@@ -1,18 +1,25 @@
 import math
-from PIL import Image
+import string
 import unittest
+import uuid
+
+import mock
+from PIL import Image
 
 import numpy as np
 
 
 class OutputNeuron(object):
-    def __init__(self, hidden_layer, inputn, outpn, offset, l_velocity):
+    def __init__(self, id_, hidden_layer, inputn, outpn, offset, l_velocity):
+        self.id_ = id_
         self.outpn = outpn
         self.l_velocity = l_velocity
         self.hidden_n = len(hidden_layer)
         self.inputn = inputn
         self.hidden_layer = hidden_layer
-        self.inc_weights = map(lambda x: x.outc_weights[self], hidden_layer)
+        import pdb; pdb.set_trace()
+        self.inc_weights = map(
+            lambda x: x.outc_weights[self], hidden_layer)
         self.offset = offset
 
     def _nguyen_widerow(self, widx):
@@ -53,7 +60,8 @@ class OutputNeuron(object):
 class HiddenNeuron(object):
 
     def __init__(
-            self, input_layer, hidden_n, outc_n, offset):
+            self, id_, input_layer, hidden_n, outc_n, offset):
+        self.id_ = id_
         self.input_layer = input_layer
         self.inputn = len(input_layer)
         self.hidden = hidden_n
@@ -73,7 +81,9 @@ class HiddenNeuron(object):
 
     def _init_weights(self):
         self.__outc_weights = np.random.uniform(-0.5, 0.5, self.outc_n)
-        return map(self._nguyen_widerow, xrange(self.outc_n))
+        nw_results = map(self._nguyen_widerow, xrange(self.outc_n))
+        # FIXME: fix weights direction
+        return dict(zip(self.output_layer, nw_results))
 
     @property
     def outc_weights(self):
@@ -175,32 +185,33 @@ class InputNeuron(object):
 class Network(object):
     def __init__(self, init_data, input_size, hidden_size, output_size):
         self.layer_size = len(init_data)
-        self.input_layer = map(self.create_input, init_data)
-        self.hidden_layer = map(self.create_hidden, init_data)
-        self.output_layer = map(self.create_output, init_data)
-        self.hidden_offset = self.init_hidden_offset()
-        self.output_offset = self.init_output_offset()
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.input_size = input_size
+        self.hidden_ids = [uuid.uuid4() for i in xrange(hidden_size)]
+        self.input_layer = map(self.create_input, init_data)
+        self.hidden_offset = self.init_hidden_offset()
+        self.hidden_layer = map(self.create_hidden, init_data)
+        self.output_offset = self.init_output_offset()
+        self.output_layer = map(self.create_output, init_data)
 
     def init_hidden_offset(self):
-        random = np.random.uniform(-0.5, 0.5, len(self.hidden_layer))
-        return dict(zip(self.hidden_layer, random))
+        random = np.random.uniform(-0.5, 0.5, self.hidden_size)
+        return dict(zip(self.hidden_ids, random))
 
     def init_output_offset(self):
-        random = np.random.uniform(-0.5, 0.5, len(self.output_layer))
+        random = np.random.uniform(-0.5, 0.5, self.output_size)
         return dict(zip(self.hidden_layer, random))
 
     def create_input(self, element):
         return InputNeuron(element, self.layer_size, self.layer_size)
 
-    def create_hidden(self, idx):
-        return HiddenNeuron(self.input_layer, self.hidden_size,
+    def create_hidden(self, id_):
+        return HiddenNeuron(id_, self.input_layer, self.hidden_size,
                             self.output_size, self.hidden_offset)
 
-    def create_output(self, idx):
-        return OutputNeuron(self.hidden_layer, self.input_size,
+    def create_output(self, id_):
+        return OutputNeuron(id_, self.hidden_layer, self.input_size,
                             self.output_size, self.output_offset, 0.5)
 
     def learn(self, root_path):
@@ -220,13 +231,15 @@ class Network(object):
 
 class TestInitWeights(unittest.TestCase):
     def test_init_input_neuron(self):
-        unittest.skip("Not implemented")
+        InputNeuron(28, 900, 28)
 
     def test_init_hidden_neuron(self):
-        unittest.skip("Not implemented")
+        HiddenNeuron('a', [mock.MagicMock() for i in xrange(28)], 900, 28,
+                     mock.MagicMock())
 
     def test_init_output_neuron(self):
-        unittest.skip("Not implemented")
+        OutputNeuron('a', [mock.MagicMock() for i in xrange(900)], 28, 28,
+            mock.MagicMock(), 0.5)
 
     def test_init_network(self):
-        unittest.skip("Not implemented")
+        Network(string.ascii_lowercase, 28, 900, 28)
