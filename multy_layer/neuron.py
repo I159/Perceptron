@@ -143,13 +143,11 @@ class HiddenNeuron(object):
 
 
 # TODO: use WeightsMixIn
-class InputNeuron(object):
+class InputNeuron(WeightsMixIn):
     def __init__(self, hidden_layer, inputn, shape=(90000, 4)):
-        self.inputn = inputn
-        self.hidden_layer = hidden_layer
+        super(InputNeuron, self).__init__(hidden_layer, inputn)
         self.shape = shape
         self.image_size = (300, 300)
-        self.__weights = None
 
     def _standardize_size(self, image):
         image.thumbnail(self.image_size, Image.ANTIALIAS)
