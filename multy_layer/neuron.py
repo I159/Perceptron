@@ -241,17 +241,11 @@ class Network(object):
         return (neuron.perceive(hidden) for neuron in self.output_layer)
 
 
-class TestInitWeights(unittest.TestCase):
-    def test_init_input_neuron(self):
-        InputNeuron(28, 900, 28)
-
-    def test_init_hidden_neuron(self):
-        HiddenNeuron('a', [mock.MagicMock() for i in xrange(28)], 900, 28,
-                     mock.MagicMock())
-
-    def test_init_output_neuron(self):
-        OutputNeuron('a', [mock.MagicMock() for i in xrange(900)], 28, 28,
-            mock.MagicMock(), 0.5)
-
-    def test_init_network(self):
-        Network(string.ascii_lowercase, 28, 900, 28)
+class TestWeights(unittest.TestCase):
+    def test_input_weights(self):
+        hidden_layer = mock.MagicMock()
+        ids = [uuid.uuid4() for i in xrange(900)]
+        hidden_layer.iterkeys.return_value = ids
+        hidden_layer.__len__.return_value = len(ids)
+        neuron = InputNeuron(hidden_layer, 28)
+        self.assertEqual(len(neuron.weights), 900)
