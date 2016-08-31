@@ -68,6 +68,33 @@ class OutputNeuron(object):
         self.offset[self] += correction
 
 
+class WeightsMixIn(object):
+    def __init__(self, next_layer, inputn):
+        self.next_layer = next_layer
+        self.inputn = inputn
+        self.__weights = None
+
+    def _nguyen_widerow(self, widx):
+        sc_factor = .7 * pow(len(self.next_layer), 1.0/self.inputn)
+        numerator = np.multiply(self.__weights[widx], sc_factor)
+        denominator = np.square(self.__weights[:widx+1])
+        denominator = np.sum(denominator)
+        denominator = math.sqrt(denominator)
+        return numerator / denominator
+
+    def _init_weights(self):
+        self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer))
+        indexed_keys = enumerate(self.next_layer.iterkeys())
+        return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
+
+    @property
+    def weights(self):
+        if not self.__weights:
+            self.__weights = self._init_weights()
+        return self.__weights
+
+
+# TODO: use WeightsMixIn
 class HiddenNeuron(object):
 
     def __init__(
@@ -79,26 +106,7 @@ class HiddenNeuron(object):
         self.outc_n = outc_n
         self.offset = offset
         self.l_velocity = .5
-        self.__weights = None
         self.output_errors = []
-
-    def _nguyen_widerow(self, widx):
-        sc_factor = .7 * pow(self.hidden, 1.0/self.inputn)
-        numerator = np.multiply(self.__weights[widx], sc_factor)
-        denominator = np.square(self.__weights[:widx+1])
-        denominator = np.sum(denominator)
-        denominator = math.sqrt(denominator)
-        return numerator / denominator
-
-    def _init_weights(self):
-        self.__weights = np.random.uniform(-0.5, 0.5, self.outc_n)
-        return map(self._nguyen_widerow, xrange(self.outc_n))
-
-    @property
-    def weights(self):
-        if not self.__weights:
-            self.__weights = self._init_weights()
-        return self.__weights
 
     def differentiate(self, input_):
         act = self.activation(input_)
@@ -134,6 +142,7 @@ class HiddenNeuron(object):
         return self.activation(self.offset + sum(weighted))
 
 
+# TODO: use WeightsMixIn
 class InputNeuron(object):
     def __init__(self, hidden_layer, inputn, shape=(90000, 4)):
         self.inputn = inputn
@@ -171,24 +180,6 @@ class InputNeuron(object):
         abs_diff = np.absolute(diff) / 256.0
         return abs_diff
 
-    def _nguyen_widerow(self, widx):
-        sc_factor = .7 * pow(len(self.hidden_layer), 1.0/self.inputn)
-        numerator = np.multiply(self.__weights[widx], sc_factor)
-        denominator = np.square(self.__weights[:widx+1])
-        denominator = np.sum(denominator)
-        denominator = math.sqrt(denominator)
-        return numerator / denominator
-
-    def _init_weights(self):
-        self.__weights = np.random.uniform(-0.5, 0.5, len(self.hidden_layer))
-        indexed_keys = enumerate(self.hidden_layer.iterkeys())
-        return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
-
-    @property
-    def weights(self):
-        if not self.__weights:
-            self.__weights = self._init_weights()
-        return self.__weights
 
 
 class Network(object):
