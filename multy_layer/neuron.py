@@ -9,6 +9,18 @@ from PIL import Image
 import numpy as np
 
 
+class Layer(object):
+    """Container type for neurons layer bulk operations."""
+    def __init__(self, neuron_type, number, auto_id=True):
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
+
+    def __getitem__(self, key):
+        raise NotImplementedError
+
+
 class OutputNeuron(object):
     def __init__(self, id_, hidden_layer, inputn, outpn, offset, l_velocity):
         self.id_ = id_
@@ -17,7 +29,6 @@ class OutputNeuron(object):
         self.hidden_n = len(hidden_layer)
         self.inputn = inputn
         self.hidden_layer = hidden_layer
-        import pdb; pdb.set_trace()
         self.inc_weights = map(
             lambda x: x.outc_weights[self], hidden_layer)
         self.offset = offset
@@ -68,28 +79,26 @@ class HiddenNeuron(object):
         self.outc_n = outc_n
         self.offset = offset
         self.l_velocity = .5
-        self.__outc_weights = None
+        self.__weights = None
         self.output_errors = []
 
     def _nguyen_widerow(self, widx):
         sc_factor = .7 * pow(self.hidden, 1.0/self.inputn)
-        numerator = np.multiply(self.__outc_weights[widx], sc_factor)
-        denominator = np.square(self.__outc_weights[:widx+1])
+        numerator = np.multiply(self.__weights[widx], sc_factor)
+        denominator = np.square(self.__weights[:widx+1])
         denominator = np.sum(denominator)
         denominator = math.sqrt(denominator)
         return numerator / denominator
 
     def _init_weights(self):
-        self.__outc_weights = np.random.uniform(-0.5, 0.5, self.outc_n)
-        nw_results = map(self._nguyen_widerow, xrange(self.outc_n))
-        # FIXME: fix weights direction
-        return dict(zip(self.output_layer, nw_results))
+        self.__weights = np.random.uniform(-0.5, 0.5, self.outc_n)
+        return map(self._nguyen_widerow, xrange(self.outc_n))
 
     @property
-    def outc_weights(self):
-        if not self.__outc_weights:
-            self.__outc_weights = self._init_weights()
-        return self.__outc_weights
+    def weights(self):
+        if not self.__weights:
+            self.__weights = self._init_weights()
+        return self.__weights
 
     def differentiate(self, input_):
         act = self.activation(input_)
@@ -104,7 +113,7 @@ class HiddenNeuron(object):
             self.output_errors = np.array(self.output_errors)
             weighted_sum = sum(
                 np.multiply(self.output_errors,
-                            self.outc_weights))
+                            self.weights))
             activation = self.activation(sum(weighted_sum))
             hidden_error = activation * weighted_sum
             offset_corr = np.multiply(self.l_velocity, hidden_error)
@@ -132,7 +141,7 @@ class InputNeuron(object):
         self.outputn = outputn
         self.shape = shape
         self.image_size = (300, 300)
-        self.__outc_weights = None
+        self.__weights = None
 
     def _standardize_size(self, image):
         image.thumbnail(self.image_size, Image.ANTIALIAS)
@@ -165,21 +174,21 @@ class InputNeuron(object):
 
     def _nguyen_widerow(self, widx):
         sc_factor = .7 * pow(self.hidden, 1.0/self.inputn)
-        numerator = np.multiply(self.__outc_weights[widx], sc_factor)
-        denominator = np.square(self.__outc_weights[:widx+1])
+        numerator = np.multiply(self.__weights[widx], sc_factor)
+        denominator = np.square(self.__weights[:widx+1])
         denominator = np.sum(denominator)
         denominator = math.sqrt(denominator)
         return numerator / denominator
 
     def _init_weights(self):
-        self.__outc_weights = np.random.uniform(-0.5, 0.5, self.hidden)
+        self.__weights = np.random.uniform(-0.5, 0.5, self.hidden)
         return map(self._nguyen_widerow, xrange(self.outputn))
 
     @property
-    def outc_weights(self):
-        if not self.__outc_weights:
-            self.__outc_weights = self._init_weights()
-        return self.__outc_weights
+    def weights(self):
+        if not self.__weights:
+            self.__weights = self._init_weights()
+        return self.__weights
 
 
 class Network(object):
