@@ -12,12 +12,16 @@ import numpy as np
 class Layer(object):
     """Container type for neurons layer bulk operations."""
     def __init__(self, neuron_type, number, previous_layer=None, auto_id=True):
+        self._neurons = None
         raise NotImplementedError
 
     def __len__(self):
         raise NotImplementedError
 
-    def __getitem__(self, key):
+    def __iter__(self):
+        return iter(self._neurons)
+
+    def __next__(self):
         raise NotImplementedError
 
 
@@ -71,8 +75,8 @@ class OutputNeuron(object):
 class WeightsMixIn(object):
     # FIXME: use ids of a next layer not the next layer itself.
     # It doesn't exist yet!
-    def __init__(self, next_layer, input_size, hidden_size):
-        self.next_layer = next_layer
+    def __init__(self, next_layer_ids, input_size, hidden_size):
+        self.next_layer_ids = next_layer_ids
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.__weights = None
@@ -86,8 +90,8 @@ class WeightsMixIn(object):
         return numerator / denominator
 
     def _init_weights(self):
-        self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer))
-        indexed_keys = enumerate(self.next_layer.iterkeys())
+        self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer_ids))
+        indexed_keys = enumerate(self.next_layer_ids)
         return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
 
     @property
@@ -99,13 +103,13 @@ class WeightsMixIn(object):
 
 class HiddenNeuron(WeightsMixIn):
 
-    def __init__(
-            self, id_, previous_layer, hidden_n, outc_n, offset):
+    def __init__(self, id_, previous_layer, next_layer, input_size,
+            hidden_size, output_size, offset):
+        super(HiddenNeuron, self).__init__(
+            next_layer.iterkeys(), input_size, hidden_size)
         self.id_ = id_
         self.previous_layer = previous_layer
-        self.previousn = len(previous_layer)
-        self.hidden = hidden_n
-        self.outc_n = outc_n
+        self.output_size = output_size
         self.offset = offset
         self.l_velocity = .5
         self.output_errors = []
@@ -119,7 +123,7 @@ class HiddenNeuron(WeightsMixIn):
 
     def learn(self, error):
         self.output_errors.append(error)
-        if len(self.output_errors) == self.outc_n:
+        if len(self.output_errors) == self.output_size:
             self.output_errors = np.array(self.output_errors)
             weighted_sum = sum(
                 np.multiply(self.output_errors,
@@ -137,7 +141,7 @@ class HiddenNeuron(WeightsMixIn):
 
     def _change_weights(self, correction):
         for neuron in self.previous_layer:
-            neuron.outc_weights[self] += correction
+            neuron.weights[self] += correction
 
     def perceive(self, previous_):
         weighted = np.multiply(previous_, self.weights)
@@ -145,8 +149,9 @@ class HiddenNeuron(WeightsMixIn):
 
 
 class InputNeuron(WeightsMixIn):
-    def __init__(self, hidden_layer, inputn, shape=(90000, 4)):
-        super(InputNeuron, self).__init__(hidden_layer, inputn)
+    def __init__(self, hidden_layer, input_size, shape=(90000, 4)):
+        super(InputNeuron, self).__init__(
+            hidden_layer.iterkeys(), input_size, len(hidden_layer))
         self.shape = shape
         self.image_size = (300, 300)
 
@@ -178,7 +183,6 @@ class InputNeuron(WeightsMixIn):
         diff = np.subtract(rgba, background)
         abs_diff = np.absolute(diff) / 256.0
         return abs_diff
-
 
 
 class Network(object):
@@ -238,4 +242,13 @@ class TestWeights(unittest.TestCase):
         hidden_layer.iterkeys.return_value = ids
         hidden_layer.__len__.return_value = len(ids)
         neuron = InputNeuron(hidden_layer, 28)
+        self.assertEqual(len(neuron.weights), 900)
+
+    def test_hidden_weights(self):
+        output_layer = mock.MagicMock()
+        ids = [uuid.uuid4() for i in xrange(900)]
+        output_layer.iterkeys.return_value = ids
+        output_layer.__len__.return_value = len(ids)
+        neuron = HiddenNeuron('a', mock.MagicMock(), output_layer, 28, 900, 28,
+            mock.MagicMock())
         self.assertEqual(len(neuron.weights), 900)
