@@ -11,7 +11,7 @@ import numpy as np
 
 class Layer(object):
     """Container type for neurons layer bulk operations."""
-    def __init__(self, neuron_type, number, auto_id=True):
+    def __init__(self, neuron_type, number, previous_layer=None, auto_id=True):
         raise NotImplementedError
 
     def __len__(self):
@@ -135,10 +135,9 @@ class HiddenNeuron(object):
 
 
 class InputNeuron(object):
-    def __init__(self, inputn, hidden, outputn, shape=(90000, 4)):
+    def __init__(self, hidden_layer, inputn, shape=(90000, 4)):
         self.inputn = inputn
-        self.hidden = hidden
-        self.outputn = outputn
+        self.hidden_layer = hidden_layer
         self.shape = shape
         self.image_size = (300, 300)
         self.__weights = None
@@ -173,7 +172,7 @@ class InputNeuron(object):
         return abs_diff
 
     def _nguyen_widerow(self, widx):
-        sc_factor = .7 * pow(self.hidden, 1.0/self.inputn)
+        sc_factor = .7 * pow(len(self.hidden_layer), 1.0/self.inputn)
         numerator = np.multiply(self.__weights[widx], sc_factor)
         denominator = np.square(self.__weights[:widx+1])
         denominator = np.sum(denominator)
@@ -181,8 +180,9 @@ class InputNeuron(object):
         return numerator / denominator
 
     def _init_weights(self):
-        self.__weights = np.random.uniform(-0.5, 0.5, self.hidden)
-        return map(self._nguyen_widerow, xrange(self.outputn))
+        self.__weights = np.random.uniform(-0.5, 0.5, len(self.hidden_layer))
+        indexed_keys = enumerate(self.hidden_layer.iterkeys())
+        return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
 
     @property
     def weights(self):
@@ -193,35 +193,38 @@ class InputNeuron(object):
 
 class Network(object):
     def __init__(self, init_data, input_size, hidden_size, output_size):
-        self.layer_size = len(init_data)
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        self.input_size = input_size
-        self.hidden_ids = [uuid.uuid4() for i in xrange(hidden_size)]
-        self.input_layer = map(self.create_input, init_data)
-        self.hidden_offset = self.init_hidden_offset()
-        self.hidden_layer = map(self.create_hidden, init_data)
-        self.output_offset = self.init_output_offset()
-        self.output_layer = map(self.create_output, init_data)
+        self.input_layer = Layer(InputNeuron, 28)
+        self.hidden_layer = Layer(HiddenNeuron, 900, self.input_layer)
+        self.output_layer = Layer(OutputNeuron, 28, self.hidden_layer)
+        #self.layer_size = len(init_data)
+        #self.hidden_size = hidden_size
+        #self.output_size = output_size
+        #self.input_size = input_size
+        #self.hidden_ids = [uuid.uuid4() for i in xrange(hidden_size)]
+        #self.input_layer = map(self.create_input, init_data)
+        #self.hidden_offset = self.init_hidden_offset()
+        #self.hidden_layer = map(self.create_hidden, init_data)
+        #self.output_offset = self.init_output_offset()
+        #self.output_layer = map(self.create_output, init_data)
 
-    def init_hidden_offset(self):
-        random = np.random.uniform(-0.5, 0.5, self.hidden_size)
-        return dict(zip(self.hidden_ids, random))
+    #def init_hidden_offset(self):
+        #random = np.random.uniform(-0.5, 0.5, self.hidden_size)
+        #return dict(zip(self.hidden_ids, random))
 
-    def init_output_offset(self):
-        random = np.random.uniform(-0.5, 0.5, self.output_size)
-        return dict(zip(self.hidden_layer, random))
+    #def init_output_offset(self):
+        #random = np.random.uniform(-0.5, 0.5, self.output_size)
+        #return dict(zip(self.hidden_layer, random))
 
-    def create_input(self, element):
-        return InputNeuron(element, self.layer_size, self.layer_size)
+    #def create_input(self, element):
+        #return InputNeuron(element, self.layer_size, self.layer_size)
 
-    def create_hidden(self, id_):
-        return HiddenNeuron(id_, self.input_layer, self.hidden_size,
-                            self.output_size, self.hidden_offset)
+    #def create_hidden(self, id_):
+        #return HiddenNeuron(id_, self.input_layer, self.hidden_size,
+                            #self.output_size, self.hidden_offset)
 
-    def create_output(self, id_):
-        return OutputNeuron(id_, self.hidden_layer, self.input_size,
-                            self.output_size, self.output_offset, 0.5)
+    #def create_output(self, id_):
+        #return OutputNeuron(id_, self.hidden_layer, self.input_size,
+                            #self.output_size, self.output_offset, 0.5)
 
     def learn(self, root_path):
         raise NotImplementedError
