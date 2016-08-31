@@ -69,13 +69,16 @@ class OutputNeuron(object):
 
 
 class WeightsMixIn(object):
-    def __init__(self, next_layer, inputn):
+    # FIXME: use ids of a next layer not the next layer itself.
+    # It doesn't exist yet!
+    def __init__(self, next_layer, input_size, hidden_size):
         self.next_layer = next_layer
-        self.inputn = inputn
+        self.input_size = input_size
+        self.hidden_size = hidden_size
         self.__weights = None
 
     def _nguyen_widerow(self, widx):
-        sc_factor = .7 * pow(len(self.next_layer), 1.0/self.inputn)
+        sc_factor = .7 * pow(self.hidden_size, 1.0/self.input_size)
         numerator = np.multiply(self.__weights[widx], sc_factor)
         denominator = np.square(self.__weights[:widx+1])
         denominator = np.sum(denominator)
@@ -94,22 +97,21 @@ class WeightsMixIn(object):
         return self.__weights
 
 
-# TODO: use WeightsMixIn
-class HiddenNeuron(object):
+class HiddenNeuron(WeightsMixIn):
 
     def __init__(
-            self, id_, input_layer, hidden_n, outc_n, offset):
+            self, id_, previous_layer, hidden_n, outc_n, offset):
         self.id_ = id_
-        self.input_layer = input_layer
-        self.inputn = len(input_layer)
+        self.previous_layer = previous_layer
+        self.previousn = len(previous_layer)
         self.hidden = hidden_n
         self.outc_n = outc_n
         self.offset = offset
         self.l_velocity = .5
         self.output_errors = []
 
-    def differentiate(self, input_):
-        act = self.activation(input_)
+    def differentiate(self, previous_):
+        act = self.activation(previous_)
         return act * (1 - act)
 
     def activation(self, weighted_sum):
@@ -134,15 +136,14 @@ class HiddenNeuron(object):
         self.offset[self] += correction
 
     def _change_weights(self, correction):
-        for neuron in self.input_layer:
+        for neuron in self.previous_layer:
             neuron.outc_weights[self] += correction
 
-    def perceive(self, input_):
-        weighted = np.multiply(input_, self.outc_weights)
+    def perceive(self, previous_):
+        weighted = np.multiply(previous_, self.weights)
         return self.activation(self.offset + sum(weighted))
 
 
-# TODO: use WeightsMixIn
 class InputNeuron(WeightsMixIn):
     def __init__(self, hidden_layer, inputn, shape=(90000, 4)):
         super(InputNeuron, self).__init__(hidden_layer, inputn)
