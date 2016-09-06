@@ -34,6 +34,7 @@ class OutputNeuron(object):
         self.inputn = inputn
         self.hidden_layer = hidden_layer
         self.inc_weights = map(
+            # TODO: iterable mock
             lambda x: x.outc_weights[self], hidden_layer)
         self.offset = offset
 
@@ -73,8 +74,6 @@ class OutputNeuron(object):
 
 
 class WeightsMixIn(object):
-    # FIXME: use ids of a next layer not the next layer itself.
-    # It doesn't exist yet!
     def __init__(self, next_layer_ids, input_size, hidden_size):
         self.next_layer_ids = next_layer_ids
         self.input_size = input_size
@@ -190,44 +189,9 @@ class Network(object):
         self.input_layer = Layer(InputNeuron, 28)
         self.hidden_layer = Layer(HiddenNeuron, 900, self.input_layer)
         self.output_layer = Layer(OutputNeuron, 28, self.hidden_layer)
-        #self.layer_size = len(init_data)
-        #self.hidden_size = hidden_size
-        #self.output_size = output_size
-        #self.input_size = input_size
-        #self.hidden_ids = [uuid.uuid4() for i in xrange(hidden_size)]
-        #self.input_layer = map(self.create_input, init_data)
-        #self.hidden_offset = self.init_hidden_offset()
-        #self.hidden_layer = map(self.create_hidden, init_data)
-        #self.output_offset = self.init_output_offset()
-        #self.output_layer = map(self.create_output, init_data)
-
-    #def init_hidden_offset(self):
-        #random = np.random.uniform(-0.5, 0.5, self.hidden_size)
-        #return dict(zip(self.hidden_ids, random))
-
-    #def init_output_offset(self):
-        #random = np.random.uniform(-0.5, 0.5, self.output_size)
-        #return dict(zip(self.hidden_layer, random))
-
-    #def create_input(self, element):
-        #return InputNeuron(element, self.layer_size, self.layer_size)
-
-    #def create_hidden(self, id_):
-        #return HiddenNeuron(id_, self.input_layer, self.hidden_size,
-                            #self.output_size, self.hidden_offset)
-
-    #def create_output(self, id_):
-        #return OutputNeuron(id_, self.hidden_layer, self.input_size,
-                            #self.output_size, self.output_offset, 0.5)
 
     def learn(self, root_path):
         raise NotImplementedError
-        # for i in paths_in_root_dir:
-            #input_ = (neuron.learn(file_path) for neuron in self.input_layer)
-            #hidden = (neuron.learn(input_) for neuron in self.hidden_layer)
-            #out = (neuron.learn(hidden) for neuron in self.output_layer)
-            #if math.sqrt(pow(out, 2)) <= self.sqrt_lim:
-            #    break
 
     def recognise(self, file_path):
         input_ = (neuron.perceive(file_path) for neuron in self.input_layer)
@@ -252,3 +216,17 @@ class TestWeights(unittest.TestCase):
         neuron = HiddenNeuron('a', mock.MagicMock(), output_layer, 28, 900, 28,
             mock.MagicMock())
         self.assertEqual(len(neuron.weights), 900)
+
+    def test_output_weights(self):
+        hidden_layer = mock.MagicMock()
+        mock_iter = [mock.Mock(), mock.Mock(), mock.Mock()]
+        for i in mock_iter:
+            i.outc_weights.__getitem__ = mock.Mock(return_value=1)
+        hidden_layer.__iter__ = mock.MagicMock(return_value=iter(mock_iter))
+        neuron = OutputNeuron('a', hidden_layer, 28, 28,
+            mock.MagicMock(), .5)
+        self.assertEqual(len(neuron.inc_weights), 3)
+
+    def test_init_network(self):
+        unittest.skip("Not implemented.")
+
