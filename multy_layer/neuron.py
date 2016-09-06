@@ -9,22 +9,6 @@ from PIL import Image
 import numpy as np
 
 
-class Layer(object):
-    """Container type for neurons layer bulk operations."""
-    def __init__(self, neuron_type, number, previous_layer=None, auto_id=True):
-        self._neurons = None
-        raise NotImplementedError
-
-    def __len__(self):
-        raise NotImplementedError
-
-    def __iter__(self):
-        return iter(self._neurons)
-
-    def __next__(self):
-        raise NotImplementedError
-
-
 class OutputNeuron(object):
     def __init__(self, id_, hidden_layer, inputn, outpn, offset, l_velocity):
         self.id_ = id_
@@ -185,7 +169,7 @@ class InputNeuron(WeightsMixIn):
 
 
 class Network(object):
-    def __init__(self, init_data, input_size, hidden_size, output_size):
+    def __init__(self, input_size, hidden_size, output_size):
         self.input_layer = Layer(InputNeuron, 28)
         self.hidden_layer = Layer(HiddenNeuron, 900, self.input_layer)
         self.output_layer = Layer(OutputNeuron, 28, self.hidden_layer)
@@ -197,6 +181,22 @@ class Network(object):
         input_ = (neuron.perceive(file_path) for neuron in self.input_layer)
         hidden = (neuron.perceive(input_) for neuron in self.hidden_layer)
         return (neuron.perceive(hidden) for neuron in self.output_layer)
+
+
+class Layer(object):
+    """Container type for neurons layer bulk operations."""
+    def __init__(self, neuron_type, number, previous_layer=None, auto_id=True):
+        import pdb; pdb.set_trace()
+        self._neurons = [neuron_type() for i in xrange(number)]
+
+    def __len__(self):
+        raise NotImplementedError
+
+    def __iter__(self):
+        return iter(self._neurons)
+
+    def __next__(self):
+        raise NotImplementedError
 
 
 class TestWeights(unittest.TestCase):
@@ -228,5 +228,4 @@ class TestWeights(unittest.TestCase):
         self.assertEqual(len(neuron.inc_weights), 3)
 
     def test_init_network(self):
-        unittest.skip("Not implemented.")
-
+        network = Network(28, 900, 28)
