@@ -170,9 +170,13 @@ class InputNeuron(WeightsMixIn):
 
 class Network(object):
     def __init__(self, input_size, hidden_size, output_size):
-        self.input_layer = Layer(InputNeuron, 28)
-        self.hidden_layer = Layer(HiddenNeuron, 900, self.input_layer)
+        # FIXME: create a pattern to initialize objects dependent from each
+        # other.
         self.output_layer = Layer(OutputNeuron, 28, self.hidden_layer)
+        self.hidden_layer = Layer(HiddenNeuron, hidden_size, self.output_layer,
+                input_size)
+        self.input_layer = Layer(InputNeuron, input_size,
+                input_size, next_layer=self.hidden_layer)
 
     def learn(self, root_path):
         raise NotImplementedError
@@ -185,9 +189,19 @@ class Network(object):
 
 class Layer(object):
     """Container type for neurons layer bulk operations."""
-    def __init__(self, neuron_type, number, previous_layer=None, auto_id=True):
-        import pdb; pdb.set_trace()
-        self._neurons = [neuron_type() for i in xrange(number)]
+    def __init__(self, neuron_type, number, input_size, next_layer=None,
+             previous_layer=None, shape=(90000, 4)):
+        neuron_factory = self._init_input_neuron(
+            neuron_type, next_layer, input_size, shape)
+        self._neurons = map(neuron_factory, xrange(number))
+
+    @staticmethod
+    def _init_input_neuron(neuron_type, next_layer, input_size, shape):
+        return lambda x: neuron_type(next_layer, input_size, shape)
+
+    def create_neurons(self):
+        # Create neurons using ids of different neurons layers.
+        raise NotImplementedError
 
     def __len__(self):
         raise NotImplementedError
