@@ -9,21 +9,45 @@ from PIL import Image
 import numpy as np
 
 
+class LayerNotRegistered(Exception):
+    pass
+
+
+class LayerAlreadyRegistered(Exception):
+    pass
+
+
 class OutputNeuron(object):
-    def __init__(self, id_, hidden_layer, inputn, outpn, offset, l_velocity):
+    def __init__(self, id_,
+            input_size, hidden_size, outp_size, offset, l_velocity):
         self.id_ = id_
-        self.outpn = outpn
+        self.output_size = outp_size
         self.l_velocity = l_velocity
-        self.hidden_n = len(hidden_layer)
-        self.inputn = inputn
-        self.hidden_layer = hidden_layer
-        self.inc_weights = map(
-            # TODO: iterable mock
-            lambda x: x.outc_weights[self], hidden_layer)
+        self.hidden_size = hidden_size
+        self.input_size = input_size
         self.offset = offset
+        self.__hidden_layer = None
+
+    @property
+    def inc_weights(self):
+        self.__inc_weights = map(
+            lambda x: x.outc_weights[self], self.hidden_layer)
+
+    @property
+    def hidden_layer(self):
+        if self.__hidden_layer:
+            return self.__hidden_layer
+        raise LayerNotRegistered()
+
+    @hidden_layer.setter
+    def hidden_layer(self, layer):
+        if not self.__hidden_layer:
+            self.__hidden_layer = layer
+        else:
+            raise LayerAlreadyRegistered()
 
     def _nguyen_widerow(self, widx):
-        sc_factor = .7 * pow(self.hidden_n, 1.0/self.inputn)
+        sc_factor = .7 * pow(self.hidden_size, 1.0/self.input_size)
         numerator = np.multiply(self.inc_weights[widx], sc_factor)
         denominator = np.square(self.inc_weights[:widx+1])
         denominator = np.sum(denominator)
