@@ -124,6 +124,7 @@ class WeightsMixIn(object):
 class HiddenNeuron(WeightsMixIn):
 
     def __init__(self, id_, input_size, hidden_size, output_size, offset):
+        super(HiddenNeuron).__init__(input_size, hidden_size)
         self.id_ = id_
         self.output_size = output_size
         self.offset = offset
@@ -133,11 +134,16 @@ class HiddenNeuron(WeightsMixIn):
 
     @property
     def previous_layer(self):
-        raise NotImplementedError()
+        if self.__previous_layer:
+            return self.__previous_layer
+        raise LayerNotRegistered()
 
     @previous_layer.setter
     def previous_layer(self, layer):
-        raise NotImplementedError()
+        if not self.__previous_layer:
+            self.__previous_layer = layer
+        else:
+            raise LayerAlreadyRegistered()
 
     def differentiate(self, previous_):
         act = self.activation(previous_)
