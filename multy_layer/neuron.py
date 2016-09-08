@@ -82,11 +82,11 @@ class OutputNeuron(object):
 
 
 class WeightsMixIn(object):
-    def __init__(self, next_layer_ids, input_size, hidden_size):
-        self.next_layer_ids = next_layer_ids
+    def __init__(self, input_size, hidden_size):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.__weights = None
+        self.__next_layer = None
 
     def _nguyen_widerow(self, widx):
         sc_factor = .7 * pow(self.hidden_size, 1.0/self.input_size)
@@ -97,8 +97,8 @@ class WeightsMixIn(object):
         return numerator / denominator
 
     def _init_weights(self):
-        self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer_ids))
-        indexed_keys = enumerate(self.next_layer_ids)
+        self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer))
+        indexed_keys = enumerate(self.next_layer)
         return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
 
     @property
@@ -107,19 +107,37 @@ class WeightsMixIn(object):
             self.__weights = self._init_weights()
         return self.__weights
 
+    @property
+    def next_layer(self):
+        if self.__nex_layer:
+            return self.__next_layer
+        raise LayerNotRegistered()
+
+    @next_layer.setter
+    def next_layer(self, layer):
+        if not self.__next_layer:
+            self.__next_layer = layer
+        else:
+            raise LayerAlreadyRegistered()
+
 
 class HiddenNeuron(WeightsMixIn):
 
-    def __init__(self, id_, previous_layer, next_layer, input_size,
-            hidden_size, output_size, offset):
-        super(HiddenNeuron, self).__init__(
-            next_layer.iterkeys(), input_size, hidden_size)
+    def __init__(self, id_, input_size, hidden_size, output_size, offset):
         self.id_ = id_
-        self.previous_layer = previous_layer
         self.output_size = output_size
         self.offset = offset
         self.l_velocity = .5
         self.output_errors = []
+        self.__previous_layer = None
+
+    @property
+    def previous_layer(self):
+        raise NotImplementedError()
+
+    @previous_layer.setter
+    def previous_layer(self, layer):
+        raise NotImplementedError()
 
     def differentiate(self, previous_):
         act = self.activation(previous_)
