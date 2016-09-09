@@ -1,3 +1,4 @@
+import abc
 import math
 import string
 import unittest
@@ -219,11 +220,9 @@ class InputNeuron(WeightsMixIn):
 class Network(object):
     def __init__(self, input_size, hidden_size, output_size):
         # TODO: Use layers registration
-        self.output_layer = Layer(OutputNeuron, 28, self.hidden_layer)
-        self.hidden_layer = Layer(HiddenNeuron, hidden_size, self.output_layer,
-                input_size)
-        self.input_layer = Layer(InputNeuron, input_size,
-                input_size, next_layer=self.hidden_layer)
+        self.output_layer = Layer(OutputNeuron, input_size, output_size)
+        self.hidden_layer = Layer(HiddenNeuron, hidden_size, input_size)
+        self.input_layer = Layer(InputNeuron, input_size, input_size)
 
     def learn(self, root_path):
         raise NotImplementedError
@@ -234,16 +233,19 @@ class Network(object):
         return (neuron.perceive(hidden) for neuron in self.output_layer)
 
 
+# TODO: Create different layers objects
 class Layer(object):
     """Container type for neurons layer bulk operations."""
-    def __init__(self, neuron_type, number, input_size, shape=(90000, 4)):
-        neuron_factory = self._init_input_neuron(
-            neuron_type, input_size, shape)
-        self.neurons = map(neuron_factory, xrange(number))
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def __init__(self, neuron_type, number, shape=(90000, 4)):
+        self.neurons = []
 
     @staticmethod
-    def _init_input_neuron(neuron_type, input_size, shape):
-        return lambda x: neuron_type(input_size, shape)
+    @abc.abstractmethod
+    def _init_neuron(neuron_type):
+        raise NotImplementedError()
 
     def register_layer(self, layer, previous=False, next_=False):
         if previous and not next_:
@@ -257,13 +259,10 @@ class Layer(object):
                 "`previous` or `next_` layer type must be specified")
 
     def __len__(self):
-        raise NotImplementedError
+        return len(self.neurons)
 
     def __iter__(self):
         return iter(self.neurons)
-
-    def __next__(self):
-        raise NotImplementedError
 
 
 class TestWeights(unittest.TestCase):
