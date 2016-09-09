@@ -90,8 +90,8 @@ class WeightsMixIn(object):
 
     def _nguyen_widerow(self, widx):
         sc_factor = .7 * pow(self.hidden_size, 1.0/self.input_size)
-        numerator = np.multiply(self.__weights[widx], sc_factor)
-        denominator = np.square(self.__weights[:widx+1])
+        numerator = np.multiply(self.weights[widx], sc_factor)
+        denominator = np.square(self.weights[:widx+1])
         denominator = np.sum(denominator)
         denominator = math.sqrt(denominator)
         return numerator / denominator
@@ -218,8 +218,7 @@ class InputNeuron(WeightsMixIn):
 
 class Network(object):
     def __init__(self, input_size, hidden_size, output_size):
-        # FIXME: create a pattern to initialize objects dependent from each
-        # other.
+        # TODO: Use layers registration
         self.output_layer = Layer(OutputNeuron, 28, self.hidden_layer)
         self.hidden_layer = Layer(HiddenNeuron, hidden_size, self.output_layer,
                 input_size)
@@ -237,25 +236,31 @@ class Network(object):
 
 class Layer(object):
     """Container type for neurons layer bulk operations."""
-    def __init__(self, neuron_type, number, input_size, next_layer=None,
-             previous_layer=None, shape=(90000, 4)):
+    def __init__(self, neuron_type, number, input_size, shape=(90000, 4)):
         neuron_factory = self._init_input_neuron(
-            neuron_type, next_layer, input_size, shape)
-        self._neurons = map(neuron_factory, xrange(number))
+            neuron_type, input_size, shape)
+        self.neurons = map(neuron_factory, xrange(number))
 
     @staticmethod
-    def _init_input_neuron(neuron_type, next_layer, input_size, shape):
-        return lambda x: neuron_type(next_layer, input_size, shape)
+    def _init_input_neuron(neuron_type, input_size, shape):
+        return lambda x: neuron_type(input_size, shape)
 
-    def create_neurons(self):
-        # Create neurons using ids of different neurons layers.
-        raise NotImplementedError
+    def register_layer(self, layer, previous=False, next_=False):
+        if previous and not next_:
+            for i in self.neurons:
+                i.previous_layer = layer
+        elif next_ and not previous:
+            for i in self.neurons:
+                i.next_layer = layer
+        else:
+            raise TypeError(
+                "`previous` or `next_` layer type must be specified")
 
     def __len__(self):
         raise NotImplementedError
 
     def __iter__(self):
-        return iter(self._neurons)
+        return iter(self.neurons)
 
     def __next__(self):
         raise NotImplementedError
