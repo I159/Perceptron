@@ -3,9 +3,9 @@ import math
 import numpy as np
 from PIL import Image
 
-from multi_layer.layers import LayerNotRegistered
-from multi_layer.layers import LayerAlreadyRegistered
-from multi_layer.mixins import WeightsMixIn
+from layers import LayerNotRegistered
+from layers import LayerAlreadyRegistered
+from mixins import WeightsMixIn
 
 
 class OutputNeuron(object):

@@ -3,10 +3,10 @@ import uuid
 
 import mock
 
-from multi_layer.network import Network
-from multi_layer.neurons import InputNeuron
-from multi_layer.neurons import HiddenNeuron
-from multi_layer.neurons import OutputNeuron
+from network import Network
+from neurons import InputNeuron
+from neurons import HiddenNeuron
+from neurons import OutputNeuron
 
 
 class TestWeights(unittest.TestCase):

@@ -23,16 +23,13 @@ class Layer(object):
     def _init_neuron(neuron_type):
         raise NotImplementedError()
 
-    def register_layer(self, layer, previous=False, next_=False):
-        if previous and not next_:
-            for i in self.neurons:
-                i.previous_layer = layer
-        elif next_ and not previous:
-            for i in self.neurons:
-                i.next_layer = layer
-        else:
-            raise TypeError(
-                "`previous` or `next_` layer type must be specified")
+    def register_previous_layer(self, layer):
+        for i in self.neurons:
+            i.previous_layer = layer
+
+    def register_naext_layer(self, layer):
+        for i in self.neurons:
+            i.next_layer = layer
 
     def __len__(self):
         return len(self.neurons)

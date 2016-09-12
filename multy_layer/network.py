@@ -1,9 +1,9 @@
-from multi_layer.layers import InputLayer
-from multi_layer.layers import HiddenLayer
-from multi_layer.layers import OutputLayer
-from multi_layer.neurons import InputNeuron
-from multi_kayer.neurons import HiddenNeuron
-from multi_layer.neurons import OutputNeuron
+from layers import InputLayer
+from layers import HiddenLayer
+from layers import OutputLayer
+from neurons import InputNeuron
+from neurons import HiddenNeuron
+from neurons import OutputNeuron
 
 
 class Network(object):
@@ -12,6 +12,11 @@ class Network(object):
         self.output_layer = OutputLayer(OutputNeuron, input_size, output_size)
         self.hidden_layer = HiddenLayer(HiddenNeuron, hidden_size, input_size)
         self.input_layer = InputLayer(InputNeuron, input_size, input_size)
+
+        self.input_layer.register_next_layer(self.hidden_layer)
+        self.hidden_layer.register_previous_layer(self.input_layer)
+        self.hidden_layer.register_next_later(self.output_layer)
+        self.output_layer.register_previous_layer(self.hidden_layer)
 
     def learn(self, root_path):
         raise NotImplementedError
