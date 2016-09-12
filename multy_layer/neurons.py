@@ -1,21 +1,11 @@
-import abc
 import math
-import string
-import unittest
-import uuid
-
-import mock
-from PIL import Image
 
 import numpy as np
+from PIL import Image
 
-
-class LayerNotRegistered(Exception):
-    pass
-
-
-class LayerAlreadyRegistered(Exception):
-    pass
+from multi_layer.layers import LayerNotRegistered
+from multi_layer.layers import LayerAlreadyRegistered
+from multi_layer.mixins import WeightsMixIn
 
 
 class OutputNeuron(object):
@@ -80,46 +70,6 @@ class OutputNeuron(object):
 
     def _change_offset(self, correction):
         self.offset[self] += correction
-
-
-class WeightsMixIn(object):
-    def __init__(self, input_size, hidden_size):
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.__weights = None
-        self.__next_layer = None
-
-    def _nguyen_widerow(self, widx):
-        sc_factor = .7 * pow(self.hidden_size, 1.0/self.input_size)
-        numerator = np.multiply(self.weights[widx], sc_factor)
-        denominator = np.square(self.weights[:widx+1])
-        denominator = np.sum(denominator)
-        denominator = math.sqrt(denominator)
-        return numerator / denominator
-
-    def _init_weights(self):
-        self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer))
-        indexed_keys = enumerate(self.next_layer)
-        return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
-
-    @property
-    def weights(self):
-        if not self.__weights:
-            self.__weights = self._init_weights()
-        return self.__weights
-
-    @property
-    def next_layer(self):
-        if self.__nex_layer:
-            return self.__next_layer
-        raise LayerNotRegistered()
-
-    @next_layer.setter
-    def next_layer(self, layer):
-        if not self.__next_layer:
-            self.__next_layer = layer
-        else:
-            raise LayerAlreadyRegistered()
 
 
 class HiddenNeuron(WeightsMixIn):
@@ -215,83 +165,3 @@ class InputNeuron(WeightsMixIn):
         diff = np.subtract(rgba, background)
         abs_diff = np.absolute(diff) / 256.0
         return abs_diff
-
-
-class Network(object):
-    def __init__(self, input_size, hidden_size, output_size):
-        # TODO: Use layers registration
-        self.output_layer = Layer(OutputNeuron, input_size, output_size)
-        self.hidden_layer = Layer(HiddenNeuron, hidden_size, input_size)
-        self.input_layer = Layer(InputNeuron, input_size, input_size)
-
-    def learn(self, root_path):
-        raise NotImplementedError
-
-    def recognise(self, file_path):
-        input_ = (neuron.perceive(file_path) for neuron in self.input_layer)
-        hidden = (neuron.perceive(input_) for neuron in self.hidden_layer)
-        return (neuron.perceive(hidden) for neuron in self.output_layer)
-
-
-# TODO: Create different layers objects
-class Layer(object):
-    """Container type for neurons layer bulk operations."""
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def __init__(self, neuron_type, number, shape=(90000, 4)):
-        self.neurons = []
-
-    @staticmethod
-    @abc.abstractmethod
-    def _init_neuron(neuron_type):
-        raise NotImplementedError()
-
-    def register_layer(self, layer, previous=False, next_=False):
-        if previous and not next_:
-            for i in self.neurons:
-                i.previous_layer = layer
-        elif next_ and not previous:
-            for i in self.neurons:
-                i.next_layer = layer
-        else:
-            raise TypeError(
-                "`previous` or `next_` layer type must be specified")
-
-    def __len__(self):
-        return len(self.neurons)
-
-    def __iter__(self):
-        return iter(self.neurons)
-
-
-class TestWeights(unittest.TestCase):
-    def test_input_weights(self):
-        hidden_layer = mock.MagicMock()
-        ids = [uuid.uuid4() for i in xrange(900)]
-        hidden_layer.iterkeys.return_value = ids
-        hidden_layer.__len__.return_value = len(ids)
-        neuron = InputNeuron(hidden_layer, 28)
-        self.assertEqual(len(neuron.weights), 900)
-
-    def test_hidden_weights(self):
-        output_layer = mock.MagicMock()
-        ids = [uuid.uuid4() for i in xrange(900)]
-        output_layer.iterkeys.return_value = ids
-        output_layer.__len__.return_value = len(ids)
-        neuron = HiddenNeuron('a', mock.MagicMock(), output_layer, 28, 900, 28,
-            mock.MagicMock())
-        self.assertEqual(len(neuron.weights), 900)
-
-    def test_output_weights(self):
-        hidden_layer = mock.MagicMock()
-        mock_iter = [mock.Mock(), mock.Mock(), mock.Mock()]
-        for i in mock_iter:
-            i.outc_weights.__getitem__ = mock.Mock(return_value=1)
-        hidden_layer.__iter__ = mock.MagicMock(return_value=iter(mock_iter))
-        neuron = OutputNeuron('a', hidden_layer, 28, 28,
-            mock.MagicMock(), .5)
-        self.assertEqual(len(neuron.inc_weights), 3)
-
-    def test_init_network(self):
-        network = Network(28, 900, 28)
