@@ -130,8 +130,6 @@ class HiddenNeuron(WeightsMixIn):
         return self.activation(self.offset + sum(weighted))
 
 
-# FIXME: remove weights initialization in output neuron since it has no outcome
-# relations.
 class InputNeuron(WeightsMixIn):
     def __init__(self, hidden_layer, input_size, shape=(90000, 4)):
         super(InputNeuron, self).__init__(
