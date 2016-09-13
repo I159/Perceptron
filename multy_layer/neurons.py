@@ -17,23 +17,27 @@ class OutputNeuron(object):
         self.hidden_size = hidden_size
         self.input_size = input_size
         self.offset = offset
-        self.__hidden_layer = None
+        self.__previous_layer = None
 
     @property
     def inc_weights(self):
-        self.__inc_weights = map(
-            lambda x: x.outc_weights[self], self.hidden_layer)
+        try:
+            self.__inc_weights = map(
+                lambda x: x.outc_weights[self], self.previous_layer)
+        except LayerNotRegistered:
+            raise LayerNotRegistered("You can't initialize weights before a "
+                    "previous neurons layer be registered.")
 
     @property
-    def hidden_layer(self):
-        if self.__hidden_layer:
-            return self.__hidden_layer
+    def previous_layer(self):
+        if self.__previous_layer:
+            return self.__previous_layer
         raise LayerNotRegistered()
 
-    @hidden_layer.setter
-    def hidden_layer(self, layer):
-        if not self.__hidden_layer:
-            self.__hidden_layer = layer
+    @previous_layer.setter
+    def previous_layer(self, layer):
+        if not self.__previous_layer:
+            self.__previous_layer = layer
         else:
             raise LayerAlreadyRegistered()
 
@@ -58,14 +62,14 @@ class OutputNeuron(object):
         offset_corr = np.multily(self.l_velocity, error)
         weights_corr = np.multiply(offset_corr, input_)
 
-        for i in self.hidden_layer:
+        for i in self.previous_layer:
             i.learn(error)
 
         self._change_weights(weights_corr)
         self._change_offset(offset_corr)
 
     def _change_weights(self, correction):
-        for neuron in self.hidden_layer:
+        for neuron in self.previous_layer:
             neuron.outc_weights[self] += correction
 
     def _change_offset(self, correction):
