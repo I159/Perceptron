@@ -23,9 +23,13 @@ class WeightsMixIn(object):
         return numerator / denominator
 
     def _init_weights(self):
-        self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer))
-        indexed_keys = enumerate(self.next_layer)
-        return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
+        try:
+            self.__weights = np.random.uniform(-0.5, 0.5, len(self.next_layer))
+            indexed_keys = enumerate(self.next_layer)
+            return {k: self._nguyen_widerow(i) for i, k in indexed_keys}
+        except LayerNotRegistered as e:
+            raise LayerNotRegistered(
+                "You can't initialize weights before next layer registered")
 
     @property
     def weights(self):
@@ -35,9 +39,10 @@ class WeightsMixIn(object):
 
     @property
     def next_layer(self):
-        if self.__nex_layer:
+        if self.__next_layer:
             return self.__next_layer
-        raise LayerNotRegistered()
+        raise LayerNotRegistered("Please register a next layer or ensure that"
+                " the type of neuron requires a next layer neurons.")
 
     @next_layer.setter
     def next_layer(self, layer):

@@ -27,7 +27,7 @@ class Layer(object):
         for i in self.neurons:
             i.previous_layer = layer
 
-    def register_naext_layer(self, layer):
+    def register_next_layer(self, layer):
         for i in self.neurons:
             i.next_layer = layer
 

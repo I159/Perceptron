@@ -75,7 +75,7 @@ class OutputNeuron(object):
 class HiddenNeuron(WeightsMixIn):
 
     def __init__(self, id_, input_size, hidden_size, output_size, offset):
-        super(HiddenNeuron).__init__(input_size, hidden_size)
+        super(HiddenNeuron, self).__init__(input_size, hidden_size)
         self.id_ = id_
         self.output_size = output_size
         self.offset = offset
@@ -130,6 +130,8 @@ class HiddenNeuron(WeightsMixIn):
         return self.activation(self.offset + sum(weighted))
 
 
+# FIXME: remove weights initialization in output neuron since it has no outcome
+# relations.
 class InputNeuron(WeightsMixIn):
     def __init__(self, hidden_layer, input_size, shape=(90000, 4)):
         super(InputNeuron, self).__init__(
