@@ -2,8 +2,8 @@ import math
 
 import numpy as np
 
-from layers import LayerNotRegistered
-from layers import LayerAlreadyRegistered
+from exceptions import LayerNotRegistered
+from exceptions import LayerAlreadyRegistered
 
 
 class WeightsMixIn(object):

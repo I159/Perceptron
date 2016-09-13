@@ -1,15 +1,10 @@
 import abc
+import collections
+import uuid
+
+from neurons import OutputNeuron
 
 
-class LayerNotRegistered(Exception):
-    pass
-
-
-class LayerAlreadyRegistered(Exception):
-    pass
-
-
-# TODO: Create different layers objects
 class Layer(object):
     """Container type for neurons layer bulk operations."""
     __metaclass__ = abc.ABCMeta
@@ -47,13 +42,19 @@ class InputLayer(Layer):
         raise NotImplementedError()
 
 
-class OutputLayer(Layer):
-    def __init__(self, neuron_type, number, shape=(90000, 4)):
-        raise NotImplementedError()
+Offset = collections.namedtuple('Offset', ('income', 'outcome'))
 
-    @staticmethod
-    def _init_neuron():
-        raise NotImplementedError()
+
+class OutputLayer(Layer):
+    def __init__(self, neuron_type, input_size, hidden_size, output_size):
+        neurons_factory = self._init_neuron(
+            input_size, hidden_size, output_size)
+        self.offset = Offset(.5, .5)
+        self.neurons = [neurons_factory() for i in xrange(output_size)]
+
+    def _init_neuron(self, input_size, hidden_size, output_size):
+        return lambda: OutputNeuron(uuid.uuid4(), input_size, hidden_size,
+                                    output_size, self.offset, .5)
 
 
 class HiddenLayer(Layer):

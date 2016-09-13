@@ -9,7 +9,8 @@ from neurons import OutputNeuron
 class Network(object):
     def __init__(self, input_size, hidden_size, output_size):
         # TODO: Use layers registration
-        self.output_layer = OutputLayer(OutputNeuron, input_size, output_size)
+        self.output_layer = OutputLayer(
+            OutputNeuron, input_size, hidden_size, output_size)
         self.hidden_layer = HiddenLayer(HiddenNeuron, hidden_size, input_size)
         self.input_layer = InputLayer(InputNeuron, input_size, input_size)
 

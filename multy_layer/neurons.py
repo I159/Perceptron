@@ -3,8 +3,8 @@ import math
 import numpy as np
 from PIL import Image
 
-from layers import LayerNotRegistered
-from layers import LayerAlreadyRegistered
+from exceptions import LayerNotRegistered
+from exceptions import LayerAlreadyRegistered
 from mixins import WeightsMixIn
 
 
