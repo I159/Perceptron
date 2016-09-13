@@ -17,7 +17,7 @@ class Network(object):
 
         self.input_layer.register_next_layer(self.hidden_layer)
         self.hidden_layer.register_previous_layer(self.input_layer)
-        self.hidden_layer.register_next_later(self.output_layer)
+        self.hidden_layer.register_next_layer(self.output_layer)
         self.output_layer.register_previous_layer(self.hidden_layer)
 
     def learn(self, root_path):
