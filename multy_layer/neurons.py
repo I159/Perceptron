@@ -131,9 +131,8 @@ class HiddenNeuron(WeightsMixIn):
 
 
 class InputNeuron(WeightsMixIn):
-    def __init__(self, hidden_layer, input_size, shape=(90000, 4)):
-        super(InputNeuron, self).__init__(
-            hidden_layer.iterkeys(), input_size, len(hidden_layer))
+    def __init__(self, input_size, hidden_size, shape=(90000, 4)):
+        super(InputNeuron, self).__init__(input_size, hidden_size)
         self.shape = shape
         self.image_size = (300, 300)
 

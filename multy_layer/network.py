@@ -13,8 +13,7 @@ class Network(object):
             OutputNeuron, input_size, hidden_size, output_size)
         self.hidden_layer = HiddenLayer(
             HiddenNeuron, input_size, hidden_size, output_size)
-        self.input_layer = InputLayer(
-            InputNeuron, input_size, hidden_size, output_size)
+        self.input_layer = InputLayer(InputNeuron, input_size, hidden_size)
 
         self.input_layer.register_next_layer(self.hidden_layer)
         self.hidden_layer.register_previous_layer(self.input_layer)

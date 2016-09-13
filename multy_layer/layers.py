@@ -10,16 +10,16 @@ Offset = collections.namedtuple('Offset', ('income', 'outcome'))
 
 class Layer(object):
     """Container type for neurons layer bulk operations."""
-    def __init__(self, neuron_type, input_size, hidden_size, output_size):
-        self.neuron_type = neuron_type
-        neurons_factory = self._init_neuron(
-            input_size, hidden_size, output_size)
-        self.offset = Offset(.5, .5)
-        self.neurons = [neurons_factory() for i in xrange(output_size)]
+    __metaclass__ = abc.ABCMeta
 
-    def _init_neuron(self, input_size, hidden_size, output_size):
-        return lambda: self.neuron_type(uuid.uuid4(), input_size, hidden_size,
-                                        output_size, self.offset, .5)
+    @abc.abstractmethod
+    def __init__(self):
+        self.neurons = []
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def _init_neuron(self, input_size, hidden_size):
+        raise NotImplementedError()
 
     def register_previous_layer(self, layer):
         for i in self.neurons:
@@ -37,14 +37,36 @@ class Layer(object):
 
 
 class InputLayer(Layer):
-    pass
+    def __init__(self, neuron_type, input_size, hidden_size):
+        self.neuron_type = neuron_type
+        neurons_factory = self._init_neuron(input_size, hidden_size)
+        self.neurons = [neurons_factory() for i in xrange(input_size)]
+
+    def _init_neuron(self, input_size, hidden_size):
+        return lambda: self.neuron_type(input_size, hidden_size)
 
 
 class OutputLayer(Layer):
-    pass
+    def __init__(self, neuron_type, input_size, hidden_size, output_size):
+        self.neuron_type = neuron_type
+        neurons_factory = self._init_neuron(
+            input_size, hidden_size, output_size)
+        self.offset = Offset(.5, .5)
+        self.neurons = [neurons_factory() for i in xrange(output_size)]
 
+    def _init_neuron(self, input_size, hidden_size, output_size):
+        return lambda: self.neuron_type(uuid.uuid4(), input_size, hidden_size,
+                                        output_size, self.offset, .5)
 
 class HiddenLayer(Layer):
+    # TODO: dry init method
+    def __init__(self, neuron_type, input_size, hidden_size, output_size):
+        self.neuron_type = neuron_type
+        neurons_factory = self._init_neuron(
+            input_size, hidden_size, output_size)
+        self.offset = Offset(.5, .5)
+        self.neurons = [neurons_factory() for i in xrange(hidden_size)]
+
     def _init_neuron(self, input_size, hidden_size, output_size):
         return lambda: self.neuron_type(uuid.uuid4(), input_size, hidden_size,
                                         output_size, self.offset)
