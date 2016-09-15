@@ -18,12 +18,15 @@ class OutputNeuron(object):
         self.input_size = input_size
         self.offset = offset
         self.__previous_layer = None
+        self.__inc_weights = None
 
     @property
     def inc_weights(self):
         try:
-            self.__inc_weights = map(
-                lambda x: x.outc_weights[self], self.previous_layer)
+            if not self.__inc_weights:
+                self.__inc_weights = map(
+                    lambda x: x.outc_weights[self], self.previous_layer)
+            return self.__inc_weights
         except LayerNotRegistered:
             raise LayerNotRegistered("You can't initialize weights before a "
                     "previous neurons layer be registered.")
@@ -68,9 +71,14 @@ class OutputNeuron(object):
         self._change_weights(weights_corr)
         self._change_offset(offset_corr)
 
-    def _change_weights(self, correction):
-        for neuron in self.previous_layer:
+    def _change_weight(self, correction):
+        def correction_worker(neuron):
             neuron.outc_weights[self] += correction
+            return neuron.outc_weights[self]
+
+    def _change_weights(self, correction):
+        weight_change_factory = self._change_weight(correction)
+        self.inc_weights = map(weight_change_factory, self.previous_layer)
 
     def _change_offset(self, correction):
         self.offset[self] += correction
