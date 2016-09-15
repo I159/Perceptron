@@ -33,7 +33,7 @@ class WeightsMixIn(object):
 
     @property
     def weights(self):
-        if not self.__weights:
+        if self.__weights is None:
             self.__weights = self._init_weights()
         return self.__weights
 

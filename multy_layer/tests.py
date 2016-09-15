@@ -22,10 +22,10 @@ class TestWeights(unittest.TestCase):
     def test_hidden_weights(self):
         output_layer = mock.MagicMock()
         ids = [uuid.uuid4() for i in xrange(900)]
-        output_layer.iterkeys.return_value = ids
+        output_layer.__iter__.return_value = iter(ids)
         output_layer.__len__.return_value = len(ids)
         neuron = HiddenNeuron('a', 28, 900, 28, mock.MagicMock())
-        neuron.next_layer = mock.MagicMock()
+        neuron.next_layer = output_layer
         self.assertEqual(len(neuron.weights), 900)
 
     def test_output_weights(self):
