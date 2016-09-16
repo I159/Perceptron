@@ -1,3 +1,5 @@
+import os
+
 from layers import InputLayer
 from layers import HiddenLayer
 from layers import OutputLayer
@@ -20,8 +22,11 @@ class Network(object):
         self.hidden_layer.register_next_layer(self.output_layer)
         self.output_layer.register_previous_layer(self.hidden_layer)
 
-    def learn(self, root_path):
-        raise NotImplementedError
+    def learn(self, root_path, value, correct):
+        images = (os.path.join(root_path, i) for i in os.listdir(root_path))
+        for neuron in self.input_layer:
+            for image in images:
+                neuron.learn(image, value, correct)
 
     def recognise(self, file_path):
         input_ = (neuron.perceive(file_path) for neuron in self.input_layer)

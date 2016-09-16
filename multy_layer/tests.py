@@ -1,3 +1,5 @@
+import ConfigParser
+import os.path
 import unittest
 import uuid
 
@@ -40,3 +42,16 @@ class TestWeights(unittest.TestCase):
 
     def test_init_network(self):
         network = Network(28, 900, 28)
+
+
+class TestLearning(unittest.TestCase):
+    def setUp(self):
+        self.network = Network(28, 900, 28)
+
+        config = ConfigParser.RawConfigParser()
+        config.read("config.ini")
+        self.trainig_data = config.get('trainig_data', 'trainig_data')
+
+    def test_learn_network(self):
+        self.network.learn(
+            os.path.join(self.trainig_data, 'a_false'), 'a', False)

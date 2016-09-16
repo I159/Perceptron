@@ -170,6 +170,9 @@ class InputNeuron(WeightsMixIn):
         max_count = unique_a[0][unique_a[1].argmax(axis=0)].tolist()
         return np.array(max_count, dtype=float)
 
+    def learn(self, image, value, correct):
+        raise NotImplementedError
+
     def perceive(self, file_path):
         rgba = self._get_rgba(file_path)
         background = self._get_background(rgba)
