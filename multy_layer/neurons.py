@@ -62,10 +62,17 @@ class OutputNeuron(object):
         return 1. / (1 + math.exp(-sum(weighted)))
 
     def perceive(self, input_, correct=None):
-        raise NotImplementedError()
+        if not correct:
+            # Compute the probability of matching the output value to the value
+            # of the neuron.
+            # Return it.
+            raise NotImplementedError()
+        self.learn(input_, correct)
 
     def learn(self, input_, correct):
-        error = np.multiply((correct - input_), self.differentiate(input_))
+        answer = correct.true if correct.value == self.id_ else correct.false
+
+        error = np.multiply((answer - input_), self.differentiate(input_))
         offset_corr = np.multily(self.l_velocity, error)
         weights_corr = np.multiply(offset_corr, input_)
 
@@ -143,7 +150,9 @@ class HiddenNeuron(WeightsMixIn):
 
     def perceive(self, previous_, correct=None):
         weighted = np.multiply(previous_, self.weights)
-        return self.activation(self.offset + sum(weighted))
+        result = self.activation(self.offset + sum(weighted))
+        for neuron in self.next_layer:
+            neuron.perceive(result, correct)
 
 
 class InputNeuron(WeightsMixIn):
@@ -175,8 +184,11 @@ class InputNeuron(WeightsMixIn):
         return np.array(max_count, dtype=float)
 
     def perceive(self, file_path, correct=None):
+        """:param correct: named tuple with three elements:
+            correct value, true and false return values."""
         rgba = self._get_rgba(file_path)
         background = self._get_background(rgba)
         diff = np.subtract(rgba, background)
         abs_diff = np.absolute(diff) / 256.0
-        return abs_diff
+        for neuron in self.next_layer:
+            neuron.perceive(abs_diff, correct)

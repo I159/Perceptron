@@ -53,5 +53,7 @@ class TestLearning(unittest.TestCase):
         self.trainig_data = config.get('trainig_data', 'trainig_data')
 
     def test_learn_network(self):
+        # TODO: use real `correct` object
+        correct = mock.MagicMock()
         self.network.learn(
-            os.path.join(self.trainig_data, 'a_false'), 'a', False)
+            os.path.join(self.trainig_data, 'a_false'), correct)
