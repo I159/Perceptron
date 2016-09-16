@@ -61,7 +61,7 @@ class OutputNeuron(object):
         weighted = np.multiply(input_, self.inc_weights)
         return 1. / (1 + math.exp(-sum(weighted)))
 
-    def perceive(self, input_, learn=False):
+    def perceive(self, input_, correct=None):
         raise NotImplementedError()
 
     def learn(self, input_, correct):
@@ -141,7 +141,7 @@ class HiddenNeuron(WeightsMixIn):
         for neuron in self.previous_layer:
             neuron.weights[self] += correction
 
-    def perceive(self, previous_, learn=False):
+    def perceive(self, previous_, correct=None):
         weighted = np.multiply(previous_, self.weights)
         return self.activation(self.offset + sum(weighted))
 
@@ -174,10 +174,7 @@ class InputNeuron(WeightsMixIn):
         max_count = unique_a[0][unique_a[1].argmax(axis=0)].tolist()
         return np.array(max_count, dtype=float)
 
-    def learn(self, image, value, correct):
-        raise NotImplementedError()
-
-    def perceive(self, file_path, learn=False):
+    def perceive(self, file_path, correct=None):
         rgba = self._get_rgba(file_path)
         background = self._get_background(rgba)
         diff = np.subtract(rgba, background)
