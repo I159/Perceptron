@@ -61,10 +61,10 @@ class OutputNeuron(object):
         weighted = np.multiply(input_, self.inc_weights)
         return 1. / (1 + math.exp(-sum(weighted)))
 
-    def learn(self):
+    def perceive(self, input_, learn=False):
         raise NotImplementedError()
 
-    def propagate_backward(self, input_, correct):
+    def learn(self, input_, correct):
         error = np.multiply((correct - input_), self.differentiate(input_))
         offset_corr = np.multily(self.l_velocity, error)
         weights_corr = np.multiply(offset_corr, input_)
@@ -119,10 +119,7 @@ class HiddenNeuron(WeightsMixIn):
     def activation(self, weighted_sum):
         return 1. / (1 + math.exp(-weighted_sum))
 
-    def learn(self):
-        raise NotImplementedError()
-
-    def propagate_backward(self, error):
+    def learn(self, error):
         self.output_errors.append(error)
         if len(self.output_errors) == self.output_size:
             self.output_errors = np.array(self.output_errors)
@@ -144,7 +141,7 @@ class HiddenNeuron(WeightsMixIn):
         for neuron in self.previous_layer:
             neuron.weights[self] += correction
 
-    def perceive(self, previous_):
+    def perceive(self, previous_, learn=False):
         weighted = np.multiply(previous_, self.weights)
         return self.activation(self.offset + sum(weighted))
 
@@ -180,10 +177,7 @@ class InputNeuron(WeightsMixIn):
     def learn(self, image, value, correct):
         raise NotImplementedError()
 
-    def propagate_backward(self):
-        raise NotImplementedError()
-
-    def perceive(self, file_path):
+    def perceive(self, file_path, learn=False):
         rgba = self._get_rgba(file_path)
         background = self._get_background(rgba)
         diff = np.subtract(rgba, background)
