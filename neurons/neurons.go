@@ -25,13 +25,13 @@ type OutputNeuron struct {
 }
 
 func (neuron *InputNeuron) NguyenWidrow() {
-	scaling_factor := 0.7 * math.Pow(PICTURE_SIZE, 1/NUMBER_INTS)
+	scaling_factor := 0.7 * math.Pow(PICTURE_SIZE, 1.0/NUMBER_INTS)
+	quad_sum := float64(0)
+	for _, j := range neuron.Weights {
+		quad_sum += math.Pow(j, 2)
+	}
+	quad_sum = math.Sqrt(quad_sum)
 	for i, v := range neuron.Weights {
-		quad_sum := float64(0)
-		for j := 0; j <= i; j++ {
-			quad_sum += math.Pow(neuron.Weights[j], 2)
-		}
-		quad_sum = math.Sqrt(quad_sum)
 		neuron.Weights[i] = (scaling_factor * v) / quad_sum
 	}
 }
