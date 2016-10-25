@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var NEURON = perceptron.NewNeuron()
+var NEURON = perceptron.NewNeuron(28*28, 10)
 
 func TestPerceptronWeightsLen(t *testing.T) {
 	if len(NEURON.Weights) > 28*28 {

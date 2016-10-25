@@ -5,8 +5,8 @@ import (
 	"math/rand"
 )
 
-const PICTURE_SIZE = 28 * 28
-const NUMBER_INTS = 10
+const SCALING_BASE = 0.7
+const WEIGHTS_LIM = 0.5
 
 type Neuron interface {
 	GenRandWeights()
@@ -14,18 +14,18 @@ type Neuron interface {
 }
 
 type InputNeuron struct {
-	Weights [PICTURE_SIZE]float64
+	Weights []float64
 }
 
 type HiddenNeuron struct {
-	Weights [NUMBER_INTS]float64
+	Weights []float64
 }
 
 type OutputNeuron struct {
 }
 
-func (neuron *InputNeuron) NguyenWidrow() {
-	scaling_factor := 0.7 * math.Pow(PICTURE_SIZE, 1.0/NUMBER_INTS)
+func (neuron *InputNeuron) NguyenWidrow(picture_size float64, items_num float64) {
+	scaling_factor := SCALING_BASE * math.Pow(picture_size, 1.0/items_num)
 	quad_sum := float64(0)
 	for _, j := range neuron.Weights {
 		quad_sum += math.Pow(j, 2)
@@ -36,18 +36,18 @@ func (neuron *InputNeuron) NguyenWidrow() {
 	}
 }
 
-func (neuron *InputNeuron) GenRandWeights() {
-	weights := new([PICTURE_SIZE]float64)
+func (neuron *InputNeuron) GenRandWeights(picture_size float64, items_num float64) {
+	weights := []float64{}
 	r := rand.New(rand.NewSource(99))
-	for i := 0; i < PICTURE_SIZE; i++ {
-		weights[i] = math.Mod(r.NormFloat64(), 0.5)
+	for i := 0.0; i < picture_size; i++ {
+		weights = append(weights, math.Mod(r.NormFloat64(), WEIGHTS_LIM))
 	}
-	neuron.Weights = *weights
-	neuron.NguyenWidrow()
+	neuron.Weights = weights
+	neuron.NguyenWidrow(picture_size, items_num)
 }
 
-func NewNeuron() InputNeuron {
-	neuron := InputNeuron{}
-	neuron.GenRandWeights()
+func NewNeuron(picture_size, items_num float64) *InputNeuron {
+	neuron := new(InputNeuron)
+	neuron.GenRandWeights(picture_size, items_num)
 	return neuron
 }
