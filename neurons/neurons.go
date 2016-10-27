@@ -1,8 +1,10 @@
 package perceptron
 
 import (
+	"fmt"
 	"math"
 	"math/rand"
+	"os"
 )
 
 const SCALING_BASE = 0.7
@@ -37,6 +39,27 @@ func (neuron *Neuron) GenRandWeights(picture_size float64, items_num float64) {
 	}
 	neuron.Weights = weights
 	neuron.NguyenWidrow(picture_size, items_num)
+}
+
+type InputNeuron struct {
+	*Neuron
+	ImageVector []float64
+}
+
+func check(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
+
+func (i *InputNeuron) Perceive(file_path string) {
+	f, err := os.Open(file_path)
+	check(err)
+
+	current_offset := 3
+	data_type := make([]byte, 1)
+	current_offset, err = f.ReadAt(data_type, 3)
+	/* TODO: Decode data type */
 }
 
 func NewNeuron(picture_size, items_num float64) *Neuron {
