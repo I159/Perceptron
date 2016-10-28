@@ -1,6 +1,7 @@
 package perceptron
 
 import (
+	"encoding/binary"
 	"fmt"
 	"math"
 	"math/rand"
@@ -52,18 +53,29 @@ func check(e error) {
 	}
 }
 
+func GetDataLength(file *os.File) (int, uint32) {
+	current_offset := 4
+	bin_data_type := make([]byte, 4)
+	offset, err := file.ReadAt(bin_data_type, int64(current_offset))
+	check(err)
+	return current_offset + offset, binary.BigEndian.Uint32(bin_data_type)
+}
+
 func (i *InputNeuron) Perceive(file_path string) {
 	f, err := os.Open(file_path)
 	check(err)
+	_, data_length := GetDataLength(f)
 
-	current_offset := 3
-	data_type := make([]byte, 1)
-	current_offset, err = f.ReadAt(data_type, 3)
-	/* TODO: Decode data type */
+	fmt.Printf("Data type: %d\n", data_length)
 }
 
 func NewNeuron(picture_size, items_num float64) *Neuron {
 	neuron := new(Neuron)
 	neuron.GenRandWeights(picture_size, items_num)
 	return neuron
+}
+
+func NewInputNeuron(picture_size, items_num float64) *InputNeuron {
+	neuron := InputNeuron{NewNeuron(picture_size, items_num), *new([]float64)}
+	return &neuron
 }
