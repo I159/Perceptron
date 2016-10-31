@@ -31,8 +31,16 @@ func TestPerceptronWeightsValues(t *testing.T) {
 
 func TestPerceive(t *testing.T) {
 	f, _ := os.Open("/home/i159/Downloads/train-images.idx3-ubyte")
-	offset, length := perceptron.GetDataLength(f)
+	offset, length := perceptron.GetDataLength(4, f)
 	if offset != 8 || length != 60000 {
 		t.Fail()
+	}
+}
+
+func TestImageSize(t *testing.T) {
+	f, _ := os.Open("/home/i159/Downloads/train-images.idx3-ubyte")
+	offset, x, y := perceptron.GetImageSize(8, f)
+	if x != 28 || y != 28 || offset != 16 {
+		t.Errorf("X: %d. Y: %d. Offset: %d\n", x, y, offset)
 	}
 }

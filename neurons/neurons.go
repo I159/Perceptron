@@ -53,20 +53,40 @@ func check(e error) {
 	}
 }
 
-func GetDataLength(file *os.File) (int, uint32) {
-	current_offset := 4
+func GetDataLength(offset int, file *os.File) (int, uint32) {
 	bin_data_type := make([]byte, 4)
-	offset, err := file.ReadAt(bin_data_type, int64(current_offset))
+	new_offset, err := file.ReadAt(bin_data_type, int64(offset))
 	check(err)
-	return current_offset + offset, binary.BigEndian.Uint32(bin_data_type)
+	return offset + new_offset, binary.BigEndian.Uint32(bin_data_type)
+}
+
+func GetImageSize(offset int, file *os.File) (int, uint32, uint32) {
+	x_dim := make([]byte, 4)
+	y_dim := make([]byte, 4)
+
+	new_offset, err := file.ReadAt(x_dim, int64(offset))
+	check(err)
+	offset += new_offset
+	x_dim_size := binary.BigEndian.Uint32(x_dim)
+
+	new_offset, err = file.ReadAt(y_dim, int64(offset))
+	check(err)
+	offset += new_offset
+	y_dim_size := binary.BigEndian.Uint32(y_dim)
+
+	return offset, x_dim_size, y_dim_size
 }
 
 func (i *InputNeuron) Perceive(file_path string) {
 	f, err := os.Open(file_path)
 	check(err)
-	_, data_length := GetDataLength(f)
+	offset := 4
+
+	offset, data_length := GetDataLength(offset, f)
+	offset, x_size, y_size := GetImageSize(offset, f)
 
 	fmt.Printf("Data type: %d\n", data_length)
+	fmt.Printf("X dimension: %d. Y dimension: %d\n", x_size, y_size)
 }
 
 func NewNeuron(picture_size, items_num float64) *Neuron {
