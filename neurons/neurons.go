@@ -77,6 +77,13 @@ func GetImageSize(offset int, file *os.File) (int, uint32, uint32) {
 	return offset, x_dim_size, y_dim_size
 }
 
+func GetImage(offset int, step uint32, file *os.File) (int, []byte) {
+	image := make([]byte, step*4)
+	new_offset, err := file.ReadAt(image, int64(offset))
+	check(err)
+	return offset + new_offset, image
+}
+
 func (i *InputNeuron) Perceive(file_path string) {
 	f, err := os.Open(file_path)
 	check(err)
@@ -84,9 +91,11 @@ func (i *InputNeuron) Perceive(file_path string) {
 
 	offset, data_length := GetDataLength(offset, f)
 	offset, x_size, y_size := GetImageSize(offset, f)
+	offset, image := GetImage(offset, x_size*y_size, f)
 
 	fmt.Printf("Data type: %d\n", data_length)
 	fmt.Printf("X dimension: %d. Y dimension: %d\n", x_size, y_size)
+	fmt.Println(image)
 }
 
 func NewNeuron(picture_size, items_num float64) *Neuron {

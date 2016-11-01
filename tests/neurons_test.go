@@ -1,7 +1,12 @@
 package tests
 
 import (
+	//"encoding/binary"
+	//	"fmt"
 	"github.com/I159/perceptron/neurons"
+	//	"image"
+	//"image/png"
+	"math"
 	"os"
 	"testing"
 )
@@ -64,4 +69,36 @@ func TestImageSize(t *testing.T) {
 	if x != DIM_SIZE || y != DIM_SIZE || offset != OFFSET.DoSteps(4) {
 		t.Errorf("X: %d. Y: %d. Offset: %d. Dummy offset: %d\n", x, y, offset, OFFSET.DoSteps(8))
 	}
+}
+
+func TestGetImage(t *testing.T) {
+	f, _ := os.Open(FILE_ADDRESS)
+	//	img := image.NewGray(image.Rect(0, 0, DIM_SIZE, DIM_SIZE))
+	image_length := uint32(math.Pow(DIM_SIZE, 2))
+
+	offset, image_bytes := perceptron.GetImage(OFFSET.DoSteps(4), image_length, f)
+
+	if (offset/4)-4 != DIM_SIZE*DIM_SIZE {
+		t.Error(offset)
+	}
+
+	for _, i := range image_bytes {
+		if i < 0 || i > 255 {
+			t.Error(i)
+		}
+	}
+
+	/*	pixels := make([]uint8, image_length)
+		for i := 0; i < int(image_length); i++ {
+			pixel := image_bytes[i : i+4]
+			pixels[i] = uint8(binary.BigEndian.Uint16(pixel))
+		}
+		img.Pix = pixels
+
+		outfile, err := os.Create("/home/i159/Pictures/test.png")
+		if err != nil {
+			t.Error(err)
+		}
+		defer outfile.Close()
+		png.Encode(outfile, img)*/
 }
