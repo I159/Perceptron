@@ -2,7 +2,8 @@ package perceptron
 
 import (
 	"encoding/binary"
-	"fmt"
+	"errors"
+	//	"fmt"
 	"math"
 	"math/rand"
 	"os"
@@ -11,6 +12,8 @@ import (
 const SCALING_BASE = 0.7
 const WEIGHTS_LIM = 0.5
 
+/*TODO: Include Perceive method to a common Neuroner interface. All the neurons
+* should be able to perceive .*/
 type Neuroner interface {
 	GenRandWeights()
 	NguyenWiderow()
@@ -47,12 +50,14 @@ type InputNeuron struct {
 	ImageVector []float64
 }
 
+/* TODO: read about panic. */
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
 }
 
+/* TODO: Create a ImagesFile type and bind all the file specific methods to the type .*/
 func IsValidBinFile(offset int, file *os.File) (int, bool) {
 	magic_number_bin := make([]byte, 4)
 	new_offset, err := file.ReadAt(magic_number_bin, int64(offset))
@@ -90,26 +95,36 @@ func GetImageSize(offset int, file *os.File) (int, uint32, uint32) {
 }
 
 func GetImage(offset int, step uint32, file *os.File) (int, []byte) {
-	image := make([]byte, step*4)
+	image := make([]byte, step)
 	new_offset, err := file.ReadAt(image, int64(offset))
 	check(err)
 	return offset + new_offset, image
 }
 
-func (i *InputNeuron) Perceive(file_path string) {
+func (i *InputNeuron) Perceive(file_path string) (error, *[][]byte) {
+	var invalid_file_error error
+	images := new([][]byte)
+
 	f, err := os.Open(file_path)
 	check(err)
 	offset := 0
 
 	offset, is_valid := IsValidBinFile(offset, f)
+
+	if is_valid == false {
+		invalid_file_error = errors.New("Invalid mnist file.")
+		return invalid_file_error, images
+	}
+
 	offset, data_length := GetDataLength(offset, f)
 	offset, x_size, y_size := GetImageSize(offset, f)
-	offset, image := GetImage(offset, x_size*y_size, f)
-
-	fmt.Printf("Valid file: %d\n", is_valid)
-	fmt.Printf("Data length: %d\n", data_length)
-	fmt.Printf("X dimension size: %d. Y dimension size: %d\n", x_size, y_size)
-	fmt.Println(image)
+	new_offset := offset
+	for i := 0; i < int(data_length); i++ {
+		offset, image := GetImage(new_offset, x_size*y_size, f)
+		*images = append(*images, image)
+		new_offset = offset
+	}
+	return invalid_file_error, images
 }
 
 func NewNeuron(picture_size, items_num float64) *Neuron {

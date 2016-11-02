@@ -1,7 +1,6 @@
 package tests
 
 import (
-	//	"fmt"
 	"github.com/I159/perceptron/neurons"
 	"math"
 	"os"
@@ -82,7 +81,7 @@ func TestGetImage(t *testing.T) {
 
 	offset, image_bytes := perceptron.GetImage(OFFSET.DoSteps(4), image_length, f)
 
-	if (offset/4)-4 != DIM_SIZE*DIM_SIZE {
+	if offset-OFFSET.DoSteps(4) != DIM_SIZE*DIM_SIZE {
 		t.Error(offset)
 	}
 
@@ -90,5 +89,13 @@ func TestGetImage(t *testing.T) {
 		if i < 0 || i > 255 {
 			t.Error(i)
 		}
+	}
+}
+
+func TestPerceive(t *testing.T) {
+	data_length := 60000
+	_, images := INPUT_NEURON.Perceive(FILE_ADDRESS)
+	if len(*images) != data_length {
+		t.Error(len(*images))
 	}
 }
