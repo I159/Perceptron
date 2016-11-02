@@ -53,6 +53,18 @@ func check(e error) {
 	}
 }
 
+func IsValidBinFile(offset int, file *os.File) (int, bool) {
+	magic_number_bin := make([]byte, 4)
+	new_offset, err := file.ReadAt(magic_number_bin, int64(offset))
+	check(err)
+	magic_number := binary.BigEndian.Uint32(magic_number_bin)
+	offset += new_offset
+	if magic_number != 2051 {
+		return offset, false
+	}
+	return offset, true
+}
+
 func GetDataLength(offset int, file *os.File) (int, uint32) {
 	bin_data_type := make([]byte, 4)
 	new_offset, err := file.ReadAt(bin_data_type, int64(offset))
@@ -87,14 +99,16 @@ func GetImage(offset int, step uint32, file *os.File) (int, []byte) {
 func (i *InputNeuron) Perceive(file_path string) {
 	f, err := os.Open(file_path)
 	check(err)
-	offset := 4
+	offset := 0
 
+	offset, is_valid := IsValidBinFile(offset, f)
 	offset, data_length := GetDataLength(offset, f)
 	offset, x_size, y_size := GetImageSize(offset, f)
 	offset, image := GetImage(offset, x_size*y_size, f)
 
-	fmt.Printf("Data type: %d\n", data_length)
-	fmt.Printf("X dimension: %d. Y dimension: %d\n", x_size, y_size)
+	fmt.Printf("Valid file: %d\n", is_valid)
+	fmt.Printf("Data length: %d\n", data_length)
+	fmt.Printf("X dimension size: %d. Y dimension size: %d\n", x_size, y_size)
 	fmt.Println(image)
 }
 

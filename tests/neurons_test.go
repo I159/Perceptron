@@ -1,11 +1,8 @@
 package tests
 
 import (
-	//"encoding/binary"
 	//	"fmt"
 	"github.com/I159/perceptron/neurons"
-	//	"image"
-	//"image/png"
 	"math"
 	"os"
 	"testing"
@@ -54,6 +51,14 @@ func TestPerceptronWeightsValues(t *testing.T) {
 	}
 }
 
+func TestValidateFile(t *testing.T) {
+	f, _ := os.Open(FILE_ADDRESS)
+	offset, is_valid := perceptron.IsValidBinFile(OFFSET.DoSteps(0), f)
+	if offset != 4 || is_valid == false {
+		t.Fail()
+	}
+}
+
 func TestDataLength(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
 	offset, length := perceptron.GetDataLength(OFFSET.DoSteps(1), f)
@@ -73,7 +78,6 @@ func TestImageSize(t *testing.T) {
 
 func TestGetImage(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	//	img := image.NewGray(image.Rect(0, 0, DIM_SIZE, DIM_SIZE))
 	image_length := uint32(math.Pow(DIM_SIZE, 2))
 
 	offset, image_bytes := perceptron.GetImage(OFFSET.DoSteps(4), image_length, f)
@@ -87,18 +91,4 @@ func TestGetImage(t *testing.T) {
 			t.Error(i)
 		}
 	}
-
-	/*	pixels := make([]uint8, image_length)
-		for i := 0; i < int(image_length); i++ {
-			pixel := image_bytes[i : i+4]
-			pixels[i] = uint8(binary.BigEndian.Uint16(pixel))
-		}
-		img.Pix = pixels
-
-		outfile, err := os.Create("/home/i159/Pictures/test.png")
-		if err != nil {
-			t.Error(err)
-		}
-		defer outfile.Close()
-		png.Encode(outfile, img)*/
 }
