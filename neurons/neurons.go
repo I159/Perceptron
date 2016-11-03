@@ -52,54 +52,53 @@ type InputNeuron struct {
 	ImageVector []float64
 }
 
-/* TODO: read about panic. */
 func check(e error) {
 	if e != nil {
 		panic(e)
 	}
 }
 
+/* TODO: use separate file for binary operations with data. */
 type ImagesFile struct {
 	*os.File
 }
 
-func (f *ImagesFile) ReadChunk(from, to int) (int, []byte) {
+func (f *ImagesFile) ReadChunk(from, to int) []byte {
 	buff := make([]byte, to-from)
-	offset, err := f.ReadAt(buff, int64(from))
+	_, err := f.ReadAt(buff, int64(from))
 	check(err)
-	return from + offset, buff
+	return buff
 }
 
-/* TODO: Create a ImagesFile type and bind all the file specific methods to the type .*/
-func (file *ImagesFile) IsValid() (int, bool) {
-	offset, is_valid := file.ReadChunk(0, BIT32)
+func (file *ImagesFile) IsValid() bool {
+	is_valid := file.ReadChunk(0, BIT32)
 	magic_number := binary.BigEndian.Uint32(is_valid)
 	if magic_number != 2051 {
-		return offset, false
+		return false
 	}
-	return offset, true
+	return true
 }
 
-func (file *ImagesFile) GetDataLength() (int, uint32) {
-	offset, length_bin := file.ReadChunk(BIT32, 2*BIT32)
-	return offset, binary.BigEndian.Uint32(length_bin)
+func (file *ImagesFile) GetDataLength() uint32 {
+	length_bin := file.ReadChunk(BIT32, 2*BIT32)
+	return binary.BigEndian.Uint32(length_bin)
 }
 
-func (file *ImagesFile) GetImageSize() (int, uint32, uint32) {
-	offset, x_dim := file.ReadChunk(2*BIT32, 3*BIT32)
+func (file *ImagesFile) GetImageSize() (uint32, uint32) {
+	x_dim := file.ReadChunk(2*BIT32, 3*BIT32)
 	x_dim_size := binary.BigEndian.Uint32(x_dim)
 
-	offset, y_dim := file.ReadChunk(3*BIT32, 4*BIT32)
+	y_dim := file.ReadChunk(3*BIT32, 4*BIT32)
 	y_dim_size := binary.BigEndian.Uint32(y_dim)
 
-	return offset, x_dim_size, y_dim_size
+	return x_dim_size, y_dim_size
 }
 
-func GetImage(offset int, step uint32, file *os.File) (int, []byte) {
-	image := make([]byte, step)
-	new_offset, err := file.ReadAt(image, int64(offset))
-	check(err)
-	return offset + new_offset, image
+func (file *ImagesFile) GetImage(image_index int, step uint32) []byte {
+	from := BIT32 * (4 + image_index)
+	to := from + int(step)
+	image := file.ReadChunk(from, to)
+	return image
 }
 
 func (i *InputNeuron) Perceive(file_path string) (error, *[][]byte) {
@@ -109,22 +108,19 @@ func (i *InputNeuron) Perceive(file_path string) (error, *[][]byte) {
 	f, err := os.Open(file_path)
 	check(err)
 	file := ImagesFile{f}
-	offset := 0
 
-	offset, is_valid := file.IsValid()
+	is_valid := file.IsValid()
 
 	if is_valid == false {
 		invalid_file_error = errors.New("Invalid mnist file.")
 		return invalid_file_error, images
 	}
 
-	offset, data_length := file.GetDataLength()
-	offset, x_size, y_size := file.GetImageSize()
-	new_offset := offset
+	data_length := file.GetDataLength()
+	x_size, y_size := file.GetImageSize()
 	for i := 0; i < int(data_length); i++ {
-		offset, image := GetImage(new_offset, x_size*y_size, f)
+		image := file.GetImage(i, x_size*y_size)
 		*images = append(*images, image)
-		new_offset = offset
 	}
 	return invalid_file_error, images
 }

@@ -53,7 +53,7 @@ func TestPerceptronWeightsValues(t *testing.T) {
 func TestValidateFile(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
 	file := perceptron.ImagesFile{f}
-	_, is_valid := file.IsValid()
+	is_valid := file.IsValid()
 	if is_valid == false {
 		t.Fail()
 	}
@@ -62,8 +62,8 @@ func TestValidateFile(t *testing.T) {
 func TestDataLength(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
 	file := perceptron.ImagesFile{f}
-	offset, length := file.GetDataLength()
-	if offset != OFFSET.DoSteps(2) || length != TRAIN_SET_SIZE {
+	length := file.GetDataLength()
+	if length != TRAIN_SET_SIZE {
 		t.Fail()
 	}
 }
@@ -71,22 +71,19 @@ func TestDataLength(t *testing.T) {
 func TestImageSize(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
 	file := perceptron.ImagesFile{f}
-	offset, x, y := file.GetImageSize()
+	x, y := file.GetImageSize()
 
-	if x != DIM_SIZE || y != DIM_SIZE || offset != OFFSET.DoSteps(4) {
-		t.Errorf("X: %d. Y: %d. Offset: %d. Dummy offset: %d\n", x, y, offset, OFFSET.DoSteps(8))
+	if x != DIM_SIZE || y != DIM_SIZE {
+		t.Errorf("X: %d. Y: %d.\n", x, y)
 	}
 }
 
 func TestGetImage(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
+	file := perceptron.ImagesFile{f}
 	image_length := uint32(math.Pow(DIM_SIZE, 2))
 
-	offset, image_bytes := perceptron.GetImage(OFFSET.DoSteps(4), image_length, f)
-
-	if offset-OFFSET.DoSteps(4) != DIM_SIZE*DIM_SIZE {
-		t.Error(offset)
-	}
+	image_bytes := file.GetImage(0, image_length)
 
 	for _, i := range image_bytes {
 		if i < 0 || i > 255 {
@@ -106,7 +103,7 @@ func TestPerceive(t *testing.T) {
 func TestImageFileReadChunk(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
 	file := perceptron.ImagesFile{f}
-	_, chunk := file.ReadChunk(0, 4)
+	chunk := file.ReadChunk(0, 4)
 	if len(chunk) != 4 {
 		t.Fail()
 	}
