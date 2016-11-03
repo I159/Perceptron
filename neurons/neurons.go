@@ -80,11 +80,9 @@ func (file *ImagesFile) IsValid() (int, bool) {
 	return offset, true
 }
 
-func GetDataLength(offset int, file *os.File) (int, uint32) {
-	bin_data_type := make([]byte, 4)
-	new_offset, err := file.ReadAt(bin_data_type, int64(offset))
-	check(err)
-	return offset + new_offset, binary.BigEndian.Uint32(bin_data_type)
+func (file *ImagesFile) GetDataLength() (int, uint32) {
+	offset, length_bin := file.ReadChunk(BIT32, 2*BIT32)
+	return offset, binary.BigEndian.Uint32(length_bin)
 }
 
 func GetImageSize(offset int, file *os.File) (int, uint32, uint32) {
@@ -127,7 +125,7 @@ func (i *InputNeuron) Perceive(file_path string) (error, *[][]byte) {
 		return invalid_file_error, images
 	}
 
-	offset, data_length := GetDataLength(offset, f)
+	offset, data_length := file.GetDataLength()
 	offset, x_size, y_size := GetImageSize(offset, f)
 	new_offset := offset
 	for i := 0; i < int(data_length); i++ {

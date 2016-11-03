@@ -61,7 +61,8 @@ func TestValidateFile(t *testing.T) {
 
 func TestDataLength(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	offset, length := perceptron.GetDataLength(OFFSET.DoSteps(1), f)
+	file := perceptron.ImagesFile{f}
+	offset, length := file.GetDataLength()
 	if offset != OFFSET.DoSteps(2) || length != TRAIN_SET_SIZE {
 		t.Fail()
 	}
