@@ -99,3 +99,12 @@ func TestPerceive(t *testing.T) {
 		t.Error(len(*images))
 	}
 }
+
+func TestImageFileReadChunk(t *testing.T) {
+	f, _ := os.Open(FILE_ADDRESS)
+	file := perceptron.ImagesFile{f}
+	offset, chunk := file.ReadChunk(0, 4)
+	if offset != 4 || len(chunk) != 4 {
+		t.Fail()
+	}
+}

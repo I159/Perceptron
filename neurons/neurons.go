@@ -14,6 +14,7 @@ const WEIGHTS_LIM = 0.5
 
 /*TODO: Include Perceive method to a common Neuroner interface. All the neurons
 * should be able to perceive .*/
+/* TODO: implement Perceive method for all the neuron types */
 type Neuroner interface {
 	GenRandWeights()
 	NguyenWiderow()
@@ -55,6 +56,17 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+type ImagesFile struct {
+	*os.File
+}
+
+func (f *ImagesFile) ReadChunk(from, to int) (int, []byte) {
+	buff := make([]byte, to-from)
+	offset, err := f.ReadAt(buff, int64(from))
+	check(err)
+	return offset, buff
 }
 
 /* TODO: Create a ImagesFile type and bind all the file specific methods to the type .*/
