@@ -12,6 +12,11 @@ const DIM_SIZE = 28
 const TRAIN_SET_SIZE = 60000
 const FILE_ADDRESS = "/home/i159/Downloads/train-images.idx3-ubyte"
 
+var OFFSET = Offset{BYTES_IN_32BIT}
+var LIMIT = Limit{0.5, -0.5}
+var NEURON = perceptron.NewNeuron(DIM_SIZE*DIM_SIZE, 10)
+var INPUT_NEURON = perceptron.NewInputNeuron(DIM_SIZE*DIM_SIZE, 10)
+
 type Limit struct {
 	Upper float64
 	Lower float64
@@ -24,11 +29,6 @@ type Offset struct {
 func (o Offset) DoSteps(steps int) int {
 	return o.Offset * steps
 }
-
-var OFFSET = Offset{BYTES_IN_32BIT}
-var LIMIT = Limit{0.5, -0.5}
-var NEURON = perceptron.NewNeuron(DIM_SIZE*DIM_SIZE, 10)
-var INPUT_NEURON = perceptron.NewInputNeuron(DIM_SIZE*DIM_SIZE, 10)
 
 func TestPerceptronWeightsLen(t *testing.T) {
 	if len(NEURON.Weights) > DIM_SIZE*DIM_SIZE {
@@ -52,8 +52,9 @@ func TestPerceptronWeightsValues(t *testing.T) {
 
 func TestValidateFile(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	offset, is_valid := perceptron.IsValidBinFile(OFFSET.DoSteps(0), f)
-	if offset != 4 || is_valid == false {
+	file := perceptron.ImagesFile{f}
+	_, is_valid := file.IsValid()
+	if is_valid == false {
 		t.Fail()
 	}
 }
@@ -103,8 +104,8 @@ func TestPerceive(t *testing.T) {
 func TestImageFileReadChunk(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
 	file := perceptron.ImagesFile{f}
-	offset, chunk := file.ReadChunk(0, 4)
-	if offset != 4 || len(chunk) != 4 {
+	_, chunk := file.ReadChunk(0, 4)
+	if len(chunk) != 4 {
 		t.Fail()
 	}
 }

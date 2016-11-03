@@ -11,6 +11,7 @@ import (
 
 const SCALING_BASE = 0.7
 const WEIGHTS_LIM = 0.5
+const BIT32 = 4
 
 /*TODO: Include Perceive method to a common Neuroner interface. All the neurons
 * should be able to perceive .*/
@@ -66,16 +67,13 @@ func (f *ImagesFile) ReadChunk(from, to int) (int, []byte) {
 	buff := make([]byte, to-from)
 	offset, err := f.ReadAt(buff, int64(from))
 	check(err)
-	return offset, buff
+	return from + offset, buff
 }
 
 /* TODO: Create a ImagesFile type and bind all the file specific methods to the type .*/
-func IsValidBinFile(offset int, file *os.File) (int, bool) {
-	magic_number_bin := make([]byte, 4)
-	new_offset, err := file.ReadAt(magic_number_bin, int64(offset))
-	check(err)
-	magic_number := binary.BigEndian.Uint32(magic_number_bin)
-	offset += new_offset
+func (file *ImagesFile) IsValid() (int, bool) {
+	offset, is_valid := file.ReadChunk(0, BIT32)
+	magic_number := binary.BigEndian.Uint32(is_valid)
 	if magic_number != 2051 {
 		return offset, false
 	}
@@ -119,9 +117,10 @@ func (i *InputNeuron) Perceive(file_path string) (error, *[][]byte) {
 
 	f, err := os.Open(file_path)
 	check(err)
+	file := ImagesFile{f}
 	offset := 0
 
-	offset, is_valid := IsValidBinFile(offset, f)
+	offset, is_valid := file.IsValid()
 
 	if is_valid == false {
 		invalid_file_error = errors.New("Invalid mnist file.")
