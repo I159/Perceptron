@@ -70,7 +70,8 @@ func TestDataLength(t *testing.T) {
 
 func TestImageSize(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	offset, x, y := perceptron.GetImageSize(OFFSET.DoSteps(2), f)
+	file := perceptron.ImagesFile{f}
+	offset, x, y := file.GetImageSize()
 
 	if x != DIM_SIZE || y != DIM_SIZE || offset != OFFSET.DoSteps(4) {
 		t.Errorf("X: %d. Y: %d. Offset: %d. Dummy offset: %d\n", x, y, offset, OFFSET.DoSteps(8))
