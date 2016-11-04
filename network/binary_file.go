@@ -1,4 +1,4 @@
-package perceptron
+package network
 
 import (
 	"encoding/binary"

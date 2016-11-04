@@ -1,34 +1,22 @@
-package perceptron
+package neurons
 
 import (
-	"errors"
 	//	"fmt"
 	"math"
 	"math/rand"
-	"os"
 )
 
 const SCALING_BASE = 0.7
 const WEIGHTS_LIM = 0.5
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 type Neuroner interface {
-	GenRandWeights()
-	NguyenWiderow()
+	GenRandWeights(picture_size float64, items_num float64)
+	NguyenWiderow(picture_size float64, items_num float64)
+	Perceive([]float64)
 }
 
 type Neuron struct {
 	Weights []float64
-}
-
-type InputNeuron struct {
-	*Neuron
-	ImageVector []float64
 }
 
 func (neuron *Neuron) NguyenWidrow(picture_size float64, items_num float64) {
@@ -53,37 +41,8 @@ func (neuron *Neuron) GenRandWeights(picture_size float64, items_num float64) {
 	neuron.NguyenWidrow(picture_size, items_num)
 }
 
-func (i *InputNeuron) Perceive(file_path string) (error, *[][]byte) {
-	var invalid_file_error error
-	images := new([][]byte)
-
-	f, err := os.Open(file_path)
-	check(err)
-	file := ImagesFile{f}
-
-	is_valid := file.IsValid()
-
-	if is_valid == false {
-		invalid_file_error = errors.New("Invalid mnist file.")
-		return invalid_file_error, images
-	}
-
-	data_length := file.GetDataLength()
-	x_size, y_size := file.GetImageSize()
-	for i := 0; i < int(data_length); i++ {
-		image := file.GetImage(i, x_size*y_size)
-		*images = append(*images, image)
-	}
-	return invalid_file_error, images
-}
-
 func NewNeuron(picture_size, items_num float64) *Neuron {
 	neuron := new(Neuron)
 	neuron.GenRandWeights(picture_size, items_num)
 	return neuron
-}
-
-func NewInputNeuron(picture_size, items_num float64) *InputNeuron {
-	neuron := InputNeuron{NewNeuron(picture_size, items_num), *new([]float64)}
-	return &neuron
 }
