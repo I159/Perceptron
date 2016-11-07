@@ -3,8 +3,11 @@ package network
 import (
 	"errors"
 	"github.com/I159/perceptron/neurons"
+	"math"
 	"os"
 )
+
+const EIGHT_BIT_PERCENT = 2.55
 
 func check(e error) {
 	if e != nil {
@@ -18,7 +21,7 @@ type Network struct {
 	OutputLayer  []neurons.Neuroner
 }
 
-func (network *Network) Perceive(file_path string) (error, *[][]byte) {
+func SplitImages(file_path string) (error, *[][]byte) {
 	var invalid_file_error error
 	images := new([][]byte)
 
@@ -43,9 +46,9 @@ func (network *Network) Perceive(file_path string) (error, *[][]byte) {
 	/* TODO: prepare signal and pass to input neurons. */
 }
 
-func (network *Network) GetBackground(images []byte) byte {
+func GetBackground(image []byte) byte {
 	counter := make(map[byte]int)
-	for _, i := range images {
+	for _, i := range image {
 		for k, _ := range counter {
 			if k == i {
 				counter[k]++
@@ -67,10 +70,16 @@ func (network *Network) GetBackground(images []byte) byte {
 	return max.Byte
 }
 
-/*func (network *Network) PrepareSignal() {
-	TODO: get background and count difference between figure and background
-}*/
+func (network *Network) PrepareSignal(image []byte) []float64 {
+	background := GetBackground(image)
+	diff := []float64{}
+	for i := range image {
+		difference := math.Abs(float64(background)-float64(i)) / EIGHT_BIT_PERCENT
+		diff = append(diff, difference)
+	}
+	return diff
+}
 
-/*func NewNetwork(image_x, image_y int) {
-	TODO: Implement configurable network constructor.
-}*/
+func NewNetwork(image_x, image_y int) {
+	/*TODO: Implement configurable network constructor.*/
+}
