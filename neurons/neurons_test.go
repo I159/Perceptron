@@ -1,14 +1,14 @@
-package tests
+package neurons
 
 import (
-	"github.com/I159/perceptron/neurons"
 	"testing"
 )
 
 const BYTES_IN_32BIT = 4
+const DIM_SIZE = 28
 
 var LIMIT = Limit{0.5, -0.5}
-var NEURON = neurons.NewNeuron(DIM_SIZE*DIM_SIZE, 10)
+var NEURON = NewNeuron(DIM_SIZE*DIM_SIZE, 10)
 
 type Limit struct {
 	Upper float64

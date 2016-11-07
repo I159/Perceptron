@@ -1,7 +1,6 @@
-package tests
+package network
 
 import (
-	"github.com/I159/perceptron/network"
 	"math"
 	"os"
 	"testing"
@@ -11,11 +10,11 @@ const DIM_SIZE = 28
 const TRAIN_SET_SIZE = 60000
 const FILE_ADDRESS = "/home/i159/Downloads/train-images.idx3-ubyte"
 
-var NETWORK = network.Network{}
+var NETWORK = Network{}
 
 func TestValidateFile(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	file := network.ImagesFile{f}
+	file := ImagesFile{f}
 	is_valid := file.IsValid()
 	if is_valid == false {
 		t.Fail()
@@ -24,7 +23,7 @@ func TestValidateFile(t *testing.T) {
 
 func TestDataLength(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	file := network.ImagesFile{f}
+	file := ImagesFile{f}
 	length := file.GetDataLength()
 	if length != TRAIN_SET_SIZE {
 		t.Fail()
@@ -33,7 +32,7 @@ func TestDataLength(t *testing.T) {
 
 func TestImageSize(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	file := network.ImagesFile{f}
+	file := ImagesFile{f}
 	x, y := file.GetImageSize()
 
 	if x != DIM_SIZE || y != DIM_SIZE {
@@ -43,7 +42,7 @@ func TestImageSize(t *testing.T) {
 
 func TestGetImage(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	file := network.ImagesFile{f}
+	file := ImagesFile{f}
 	image_length := uint32(math.Pow(DIM_SIZE, 2))
 
 	image_bytes := file.GetImage(0, image_length)
@@ -65,7 +64,7 @@ func TestPerceive(t *testing.T) {
 
 func TestImageFileReadChunk(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
-	file := network.ImagesFile{f}
+	file := ImagesFile{f}
 	chunk := file.ReadChunk(0, 4)
 	if len(chunk) != 4 {
 		t.Fail()

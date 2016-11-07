@@ -67,10 +67,10 @@ func (network *Network) GetBackground(images []byte) byte {
 	return max.Byte
 }
 
-func (network *Network) PrepareSignal() {
-	/* TODO: get background and count difference between figure and background */
-}
+/*func (network *Network) PrepareSignal() {
+	TODO: get background and count difference between figure and background
+}*/
 
-func NewNetwork(image_x, image_y int) {
-	/* TODO: Implement configurable network constructor. */
-}
+/*func NewNetwork(image_x, image_y int) {
+	TODO: Implement configurable network constructor.
+}*/
