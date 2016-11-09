@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const EIGHT_BIT_PERCENT = 2.55
+const EIGHT_BIT = 255
 
 func check(e error) {
 	if e != nil {
@@ -69,14 +69,14 @@ func GetBackground(image []byte) byte {
 	return max.Byte
 }
 
-func (network *Network) PrepareSignal(image []byte) []float64 {
+func PrepareSignal(image []byte) []float64 {
 	background := GetBackground(image)
-	diff := []float64{}
-	for i := range image {
-		difference := math.Abs(float64(background)-float64(i)) / EIGHT_BIT_PERCENT
-		diff = append(diff, difference)
+	signal := []float64{}
+	for _, i := range image {
+		difference := math.Abs(float64(background-i)) / EIGHT_BIT
+		signal = append(signal, difference)
 	}
-	return diff
+	return signal
 }
 
 func NewNetwork(image_x, image_y int) {

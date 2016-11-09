@@ -83,3 +83,14 @@ func TestGetBackground(t *testing.T) {
 		}
 	}
 }
+
+func TestPrepareSignal(t *testing.T) {
+	_, images := SplitImages(FILE_ADDRESS)
+	imgs := *images
+	signal := PrepareSignal(imgs[0])
+	for _, i := range signal {
+		if i > 1 || i < 0 {
+			t.Fail()
+		}
+	}
+}
