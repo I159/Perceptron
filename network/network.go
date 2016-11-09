@@ -79,6 +79,9 @@ func PrepareSignal(image []byte) []float64 {
 	return signal
 }
 
+func TransmitSignal([]float64) {
+}
+
 func NewNetwork(image_x, image_y int) {
 	/*TODO: Implement configurable network constructor.*/
 }
