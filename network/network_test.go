@@ -54,9 +54,9 @@ func TestGetImage(t *testing.T) {
 	}
 }
 
-func TestPerceive(t *testing.T) {
+func TestSplitImage(t *testing.T) {
 	data_length := 60000
-	_, images := NETWORK.Perceive(FILE_ADDRESS)
+	_, images := SplitImages(FILE_ADDRESS)
 	if len(*images) != data_length {
 		t.Error(len(*images))
 	}
@@ -68,5 +68,18 @@ func TestImageFileReadChunk(t *testing.T) {
 	chunk := file.ReadChunk(0, 4)
 	if len(chunk) != 4 {
 		t.Fail()
+	}
+}
+
+func TestGetBackground(t *testing.T) {
+	_, images := SplitImages(FILE_ADDRESS)
+	imgs := *images
+	bg := GetBackground(imgs[0])
+	counter := make(map[byte]int)
+	for _, i := range imgs[0] {
+		counter[i]++
+		if counter[i] > counter[bg] {
+			t.Fail()
+		}
 	}
 }

@@ -43,7 +43,6 @@ func SplitImages(file_path string) (error, *[][]byte) {
 		*images = append(*images, image)
 	}
 	return invalid_file_error, images
-	/* TODO: prepare signal and pass to input neurons. */
 }
 
 func GetBackground(image []byte) byte {
