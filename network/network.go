@@ -79,7 +79,15 @@ func PrepareSignal(image []byte) []float64 {
 	return signal
 }
 
-func TransmitSignal([]float64) {
+func (n *Network) TransmitSignal(signal []float64) {
+	for _, neuron := range n.InputLayer {
+		neuron.Perceive(signal)
+	}
+}
+
+func (n *Network) Classify(bin_file_addr string) {
+	err, images := SplitImages(bin_file_addr)
+	for _, i := range images 
 }
 
 func NewNetwork(image_x, image_y int) {

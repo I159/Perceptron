@@ -41,6 +41,12 @@ func (neuron *Neuron) GenRandWeights(picture_size float64, items_num float64) {
 	neuron.NguyenWidrow(picture_size, items_num)
 }
 
+type InputNeuron struct {
+	Neuron
+}
+
+func (neuron *Neuron) Perceive([]float64) {}
+
 func NewNeuron(picture_size, items_num float64) *Neuron {
 	neuron := new(Neuron)
 	neuron.GenRandWeights(picture_size, items_num)
