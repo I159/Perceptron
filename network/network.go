@@ -79,17 +79,27 @@ func PrepareSignal(image []byte) []float64 {
 	return signal
 }
 
-func (n *Network) TransmitSignal(signal []float64) {
-	for _, neuron := range n.InputLayer {
-		neuron.Perceive(signal)
+func (n *Network) Initialize(bin_file_addr string) {
+	err, images := SplitImages(bin_file_addr)
+	check(err)
+	for _, img := range *images {
+		for i, pixel := range PrepareSignal(img) {
+			/* Transmit signal to input layer of neurons */
+			n.InputLayer[i].Perceive(pixel)
+		}
 	}
 }
 
-func (n *Network) Classify(bin_file_addr string) {
-	err, images := SplitImages(bin_file_addr)
-	for _, i := range images 
+func (n *Network) Classify(bin_file_addr string) rune {
+	n.Initialize(bin_file_addr) /* Init downstream pipeline */
+	for {
+		select {
+		case decision := <-neurons.Output:
+			return decision
+		}
+	}
 }
 
 func NewNetwork(image_x, image_y int) {
-	/*TODO: Implement configurable network constructor.*/
+	//input_layer := make([]neurons)
 }

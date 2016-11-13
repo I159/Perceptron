@@ -94,3 +94,6 @@ func TestPrepareSignal(t *testing.T) {
 		}
 	}
 }
+
+func TestInit(t *testing.T) {
+}
