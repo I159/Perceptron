@@ -21,6 +21,8 @@ type Network struct {
 	OutputLayer  []neurons.Neuroner
 }
 
+/* TODO: implement dependency injection and test atomically */
+
 func SplitImages(file_path string) (error, *[][]byte) {
 	var invalid_file_error error
 	images := new([][]byte)
