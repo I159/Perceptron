@@ -9,12 +9,6 @@ import (
 
 const EIGHT_BIT = 255
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 type Network struct {
 	InputLayer   []neurons.Neuroner
 	HiddenLayers [][]neurons.Neuroner
