@@ -36,8 +36,7 @@ func (file *BigEndianFile) GetDataLength() uint32 {
 	return binary.BigEndian.Uint32(length_bin)
 }
 
-func (file *BigEndianFile) GetImageSize() (uint32, uint32) {
-	var err error
+func (file *BigEndianFile) GetItemSize() (uint32, uint32) {
 	var size [2]uint32
 	from := 2
 	to := 3
@@ -51,8 +50,7 @@ func (file *BigEndianFile) GetImageSize() (uint32, uint32) {
 	return size[0], size[1]
 }
 
-func (file *BigEndianFile) GetImage(image_index int, step uint32) []byte {
-	var buf []byte
+func (file *BigEndianFile) GetItem(image_index int, step uint32) []byte {
 	from := BIT32 * (4 + image_index)
 	to := from + int(step)
 	return file.ReadChunk(from, to)
