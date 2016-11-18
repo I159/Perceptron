@@ -2,6 +2,8 @@ package network
 
 import (
 	"errors"
+	"github.com/I159/perceptron/error_handling"
+	"github.com/I159/perceptron/extensions"
 	"github.com/I159/perceptron/neurons"
 	"math"
 	"os"

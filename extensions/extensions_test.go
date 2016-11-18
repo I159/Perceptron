@@ -70,7 +70,7 @@ func TestDataLength(t *testing.T) {
 func TestImageSize(t *testing.T) {
 	f, _ := os.Open(FILE_ADDRESS)
 	file := BigEndianFile{f}
-	x, y := file.GetImageSize()
+	x, y := file.GetItemSize()
 
 	if x != DIM_SIZE || y != DIM_SIZE {
 		t.Errorf("X: %d. Y: %d.\n", x, y)
@@ -82,7 +82,7 @@ func TestGetImage(t *testing.T) {
 	file := BigEndianFile{f}
 	image_length := uint32(math.Pow(DIM_SIZE, 2))
 
-	image_bytes := file.GetImage(0, image_length)
+	image_bytes := file.GetItem(0, image_length)
 
 	for _, i := range image_bytes {
 		if i < 0 || i > 255 {
