@@ -2,7 +2,6 @@ package extensions
 
 import (
 	"errors"
-	"io"
 	"math"
 	"os"
 	"testing"
@@ -27,8 +26,8 @@ func (f *MockReadAt) ReadAt(b []byte, off int64) (n int, err error) {
 
 var f, _ = os.Open(FILE_ADDRESS)
 var read_chunk_cases = struct {
-	Success io.ReaderAt
-	Fail    io.ReaderAt
+	Success ChunkReader
+	Fail    ChunkReader
 }{
 	&BigEndianFile{f},
 	&MockReadAt{BigEndianFile{f}, errors.New("Read chunk method has failed.")},

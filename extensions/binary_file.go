@@ -8,18 +8,27 @@ import (
 
 const BIT32 = 4
 
+type ChunkReader interface {
+	ReadChunk(from, to int) (buff []byte)
+	IsValid() bool
+	GetDataLength() uint32
+	GetItemSize() (uint32, uint32)
+	GetItem(image_index int, step uint32)
+	ReadAt(p []byte, off int64) (n int, err error)
+}
+
 type BigEndianFile struct {
 	*os.File
 }
 
-func (f *BigEndianFile) ReadChunk(from, to int) []byte {
-	buff := make([]byte, to-from)
+func (f BigEndianFile) ReadChunk(from, to int) (buff []byte) {
+	buff = make([]byte, to-from)
 	_, err := f.ReadAt(buff, int64(from))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s", err)
 		os.Exit(1)
 	}
-	return buff
+	return
 }
 
 func (file *BigEndianFile) IsValid() bool {
